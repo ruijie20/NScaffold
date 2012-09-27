@@ -26,3 +26,25 @@ Self update.
 Create template nuspec for a project. 
 
 _target: should support test, web, application_
+
+
+preserved file and folders:
+--------------
+    go.ps1
+    build/
+
+
+configuration point
+------------------------
+
+source code folder (contains all *.nuspec file)
+
+\# src, test
+
+package repository (push package, local and ci)
+
+\# tmp, http://localhost/nuget/repo
+
+
+
+
