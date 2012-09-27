@@ -30,22 +30,32 @@ Create template nuspec for a project.
 _target: should support test, web, application_
 
 
-preserved file and folders:
+Preserved files and folders:
 --------------
     go.ps1
     build/
 
 
-configuration point
+Configuration Point
 ------------------------
 
+###Common configuration
+
 source code folder (contains all *.nuspec file)
+> src, test
 
-\# src, test
+###env configuration
+package repository (push package to)
 
-package repository (push package, local and ci)
+> local tmp/nupkgs/ 
 
-\# tmp, http://localhost/nuget/repo
+> remote http://localhost/nuget/repo
+
+version file locate function (pass version information for different build stage)
+> local $pkgVersion = get-content tmp/nupkgs/version.txt
+
+> remote $pkgVersion = get from somewhere
+
 
 
 
