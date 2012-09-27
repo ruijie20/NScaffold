@@ -4,7 +4,9 @@ A build &amp; deploy scaffold scripts generator for .net project development.
 
 How to install? 
 
-Like chocolatey. Could use chocolatey to install. 
+Use chocolatey. 
+
+    cinst nscaffold
 
 Commands 
 -------------------
