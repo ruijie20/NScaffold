@@ -7,5 +7,5 @@ function Initialize-Project([string]$projectPath) {
 	}
 	
  	$scaffoldDir = Install-NuPackage "NScaffold.Scaffold" "$localRepo"
- 	copy-item "$scaffoldDir\*" "$projectPath" -force -recurse -verbose
+ 	# copy-item "$scaffoldDir\*" "$projectPath" -force -recurse -verbose
 }

@@ -1,5 +1,4 @@
-Function Include-PSFolder($folder) {
+Function Extract-PSFiles($folder) {
 	Resolve-Path $folder\*.ps1 | 
-    	? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-    	% { . $_.ProviderPath }
+    	? { -not ($_.ProviderPath.Contains(".Tests.")) } 
 }
