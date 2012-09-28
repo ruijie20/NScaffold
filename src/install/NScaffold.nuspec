@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>NScaffold</id>
+    <title>NScaffold</title>
+    <version>0.0.5</version>
+    <authors>xiaoyvr</authors>
+    <owners>xiaoyvr</owners>
+    <summary>NScaffold</summary>
+    <description>NScaffold</description>
+    <projectUrl>https://github.com/xiaoyvr/NScaffold</projectUrl>
+    <tags>NScaffold</tags>
+    <copyright></copyright>
+    <licenseUrl>https://foo/license.txt</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <!--<iconUrl>https://github.com/__CHOCO_PKG_OWNER_REPO__/raw/master/__NAME__/__NAME__.gif</iconUrl>-->
+    <!--<dependencies>
+      <dependency id="" version="" />
+    </dependencies>-->
+    <releaseNotes></releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools\" />
+    <file src="config.ps1" target="tools\" />
+    <file src="..\..\nuget\**" target="tools\" />
+  </files>
+</package>
