@@ -20,9 +20,10 @@
     <releaseNotes></releaseNotes>
   </metadata>
   <files>
-    <file src="tools\**" target="tools\" />
+    <file src="tools\**" target="tools\" />    
+    <file src="..\core\**" target="tools\core\" />
+    <file src="..\functions\**" target="tools\functions\" />
+    <file src="..\nuget\**" target="tools\nuget\" />
     <file src="config.ps1" target="tools\" />
-	<file src="..\functions\**" target="tools\functions\" />
-    <file src="..\..\nuget\**" target="tools\" />
   </files>
 </package>

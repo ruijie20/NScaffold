@@ -2,19 +2,16 @@ param(
   [string] $command
 )
 
-$root = Split-Path -parent $MyInvocation.MyCommand.Definition
-
-if(Test-Path "config.ps1"){
-	. "config.ps1"
+if(!$root){
+  $root = Split-Path -parent $MyInvocation.MyCommand.Definition
 }
 
-Resolve-Path $root\functions\*.ps1 | 
+Resolve-Path $root\core\*.ps1 | 
     ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
     % { . $_.ProviderPath }
 
-Resolve-Path $root\commands\*.ps1 | 
-    ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-    % { . $_.ProviderPath }
+Include-PSFolder "$root\functions\"
+Include-PSFolder ".\commands\"
 
 
 if(-not $command){
