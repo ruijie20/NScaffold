@@ -4,15 +4,18 @@ param(
 
 $root = Split-Path -parent $MyInvocation.MyCommand.Definition
 
-Resolve-Path $root\commands\*.ps1 | 
-    ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-    % { . $_.ProviderPath }
-
 if(Test-Path "config.ps1"){
 	. "config.ps1"
 }
 
-$localRepo =  Join-Path $env:appdata "NScaffold\scaffolds\"
+Resolve-Path $root\functions\*.ps1 | 
+    ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
+    % { . $_.ProviderPath }
+
+Resolve-Path $root\commands\*.ps1 | 
+    ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
+    % { . $_.ProviderPath }
+
 
 if(-not $command){
 	Show-Help

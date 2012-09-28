@@ -56,7 +56,3 @@ version file locate function (pass version information for different build stage
 
 > remote $pkgVersion = get from somewhere
 
-
-
-
-
