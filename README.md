@@ -1,3 +1,25 @@
+Development Naming Style
+=========
+
+* Folder name should like `functions` or `some-functions`
+* Function name should like `Get-Something`
+* All shared files shoud contain suffix `.ns.ps1`
+* All private files shoud not contain any suffix
+* Pure script file name should like `doSomething[.ns].ps1`
+* File with single function should be named **as same as that function**
+* File with mutiple functions should be named like `_some_functions[.ns].ps1`
+
+"Root" Paths
+========
+
+* `$root` is the starting script root path
+* `$libsRoot` is the lib root path
+* `$toolsRoot` is the tool root path
+* All path should have specific meanings, should remain the same within different executing context. 
+
+
+------------------------------
+
 NScaffold (to be)
 =========
 A build &amp; deploy scaffold scripts generator for .net project development. 
@@ -11,40 +33,39 @@ Use chocolatey.
 Commands 
 -------------------
 
-    ns init path/to/codebase
+    nscaffold init path/to/codebase
     
 Create go.ps1 and build folder, with local configuration file of nscaffold. Support common tasks in development. 
 
-    ns version path/to/codebase
+    nscaffold version path/to/codebase
 Show which version of the scaffold this folder is using. Show the newest scaffold version also. 
 
-    ns upgrade path/to/codebase
+    nscaffold upgrade path/to/codebase
 Update newest features of nscaffold. 
 
-    ns update
+    nscaffold update
 Self update.
 
-    ns nuspec path/to/project target
+    nscaffold nuspec path/to/project target
 Create template nuspec for a project. 
 
 _target: should support test, web, application_
 
 
-Preserved files and folders:
+Preserved files and folders
 --------------
     go.ps1
     build/
 
-
 Configuration Point
 ------------------------
 
-###Common configuration
+### Common configuration
 
 source code folder (contains all *.nuspec file)
 > src, test
 
-###env configuration
+### env configuration
 package repository (push package to)
 
 > local tmp/nupkgs/ 

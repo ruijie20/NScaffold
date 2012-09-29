@@ -10,7 +10,7 @@ Function Install-NuPackage($package, $workingDir, $version = "") {
 		$sourceSection = "-s $nugetSource"
 	}
 
-	$nuget = "$root\nuget\nuget.exe"
+	$nuget = "$toolsRoot\nuget\nuget.exe"
 	$nuGetInstallOutput = Iex "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir"
 	if (!$version) {
 	 	$version = $nuGetInstallOutput |  % { $regex.Matches($_) } | % { $_.Groups[1].Value }

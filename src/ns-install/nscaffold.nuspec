@@ -21,9 +21,7 @@
   </metadata>
   <files>
     <file src="tools\**" target="tools\" />    
-    <file src="..\core\**" target="tools\core\" />
-    <file src="..\functions\**" target="tools\functions\" />
-    <file src="..\nuget\**" target="tools\nuget\" />
-    <file src="config.ps1" target="tools\" />
+    <file src="..\..\src-libs\**" target="tools\scripts\libs\" />
+    <file src="..\..\tools\nuget\**" target="tools\tools\nuget\" />
   </files>
 </package>

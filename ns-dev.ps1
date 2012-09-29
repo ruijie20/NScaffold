@@ -3,6 +3,7 @@ $basePath = Split-Path -parent $MyInvocation.MyCommand.Definition
 
 $localSource = "$basePath\tmp\pkgs\".Replace("\", "/")
 $nugetSource = "file:///$localSource"
-$root = join-path $basePath "src\"
+$libsRoot = join-path $basePath "src-libs\"
+$toolsRoot = join-path $basePath "tools\"
 
-. .\src\install\tools\NScaffold.ps1 @args
+. .\src\ns-install\tools\nscaffold.ps1 @args
