@@ -11,14 +11,14 @@ trap{
 }
 $error.clear()
 
-$root = $MyInvocation.MyCommand.Path | Split-Path -parent
-$scriptRoot = "$root\build\scripts"
+$codeBaseRoot = $MyInvocation.MyCommand.Path | Split-Path -parent
+$scriptRoot = "$codeBaseRoot\build\scripts"
 if(!$libsRoot){
   $libsRoot = "$scriptRoot\libs"
 }
 
 if(!$toolsRoot){
-    $toolsRoot = "$root\build\tools"
+    $toolsRoot = "$codeBaseRoot\build\tools"
 }
 
 $env:EnableNuGetPackageRestore = "true"
@@ -37,14 +37,15 @@ PS-Get "psake" "4.2.0.1" {
     $psake.use_exit_on_error = $true
 }
 
-
 Import-Module WebAdministration -Force
 
 $buildParmeters = @{ 
-    "codeBaseRoot" = "$root"
+    "codeBaseRoot" = "$codeBaseRoot"
+    "libsRoot" = "$libsRoot"
+    "toolsRoot" = "$toolsRoot"
 }
 
-. $root\build\environment\$env.ps1
+. $codeBaseRoot\build\environment\$env.ps1
 $mergedParams = Merge-Hashtable $buildParmeters $envParameters
 
 . Register-Extension $MyInvocation.MyCommand.Path
@@ -55,3 +56,5 @@ if(!$psake.build_success) {
     $mergedParams | format-table | Out-String | write-host -f yellow
     throw "Failed to execute Task $target."
 }
+
+Exit 0
