@@ -3,11 +3,14 @@
 properties{
     Resolve-Path "$libsRoot\*.ps1" | 
     ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-    % { . $_.ProviderPath }
+    % { . "$($_.ProviderPath)" }
     . PSRequire "$libsRoot\functions\"
     . PSRequire ".\functions\"
     $env:EnableNuGetPackageRestore = "true"
     $context = @{}
+    . $codebaseRoot\codebaseConfig.ps1
+    $projectDirs = $codebaseConfig.projectDirs
+    $yam = "$codebaseRoot\yam.ps1"
 }
 
 include ".\build.prop.ps1"
@@ -19,13 +22,15 @@ TaskSetup {
 
 Task Clean -description "clear all bin and obj under project directories (with extra outputs)" {
     Clean-Projects $projectDirs
-    $extraProjectOutputs | 
+    $codebaseConfig.extraProjectOutputs | 
         ? { Test-Path $_ } |
         Remove-Item -Force -Recurse
 }
 
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
-    Get-DeployProjects $projectDirs | % { Compile-Project $_ }
+    Get-DeployProjects $projectDirs | % { 
+        &$yam build $_
+    }
 }
 
 Task Package -depends Compile -description "Compile, package and push to nuget server"{

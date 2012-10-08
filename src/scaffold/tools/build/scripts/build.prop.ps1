@@ -1,6 +1,5 @@
 
 properties {
-    $projectDirs = @("$codebaseRoot\src", "$codebaseRoot\test") 
     $extraProjectOutputs = @()
     # $majorVersion = "1.0"
     # $buildConfiguration = "Debug"

@@ -1,7 +1,6 @@
-Function Install-NuPackage($package, $workingDir, $version = "") {
+Function Install-NuPackage($package, $workingDir, [string]$version = "", [scriptblock] $postInstall) {
 	Write-Host "Downloading package [$package] from [$nugetSource] to [$workingDir]...." -f cyan
-	[regex]$regex = "(?i)`'$package ([\d\.]*)`'"
-
+	[regex]$regex = "(?i)\'$package (?<version>.*)\'"
 	if ($version) {
 		$versionSection = "-v $version"
 	}
@@ -9,25 +8,36 @@ Function Install-NuPackage($package, $workingDir, $version = "") {
 	if($nugetSource){
 		$sourceSection = "-s $nugetSource"
 	}
+	
+	# 'xunit 1.9.1' already installed.
+	# Successfully installed 'xunit 1.9.1'.
 
 	$nuget = "$toolsRoot\nuget\nuget.exe"	
 	$cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir"
 	$nuGetInstallOutput = Iex "$cmd"
-	if (!$version) {
-	 	$version = $nuGetInstallOutput |  % { $regex.Matches($_) } | % { $_.Groups[1].Value }
+	
+	if($version){
+		$installedVersion = $version
+	} else {
+		$installedVersion = $nuGetInstallOutput -match $regex | % { $matches.version }	
 	}
 
-	if ($nuGetInstallOutput -contains "Unable") {
+	if ($nuGetInstallOutput -match "Unable") {
 		Write-Host "$cmd" -f yellow
-	    throw "Package not found. "
+	    throw "$nuGetInstallOutput"
 	}
 
-	if(-not $version){
+	if(-not $installedVersion){
 		Write-Host "$cmd" -f yellow
-		throw "No package was installed. "
+		throw "$nuGetInstallOutput"
 	}
- 	
- 	$packageDir = "$workingDir\$package.$version"
+
+ 	$packageDir = "$workingDir\$package.$installedVersion"
 	Write-Host "Package [$package] has been downloaded to [$packageDir]." -f cyan
+	if($nuGetInstallOutput -match "Successfully installed"){
+		if($postInstall){
+			&$postInstall $packageDir			
+		}
+	}
  	$packageDir
 }

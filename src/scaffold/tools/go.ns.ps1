@@ -30,11 +30,15 @@ Resolve-Path "$libsRoot\*.ps1" |
 . PSRequire "$libsRoot\functions\"
 
 # register ps-get packages
-PS-Get "psake" "4.2.0.1" {
-    param($pkgDir)        
-    $psakeModule = get-childitem $pkgDir psake.psm1 -recurse
+PS-Get "psake" "4.2.0.1" | % {
+    $psakeModule = get-childitem $_ psake.psm1 -recurse
     Import-Module $psakeModule.FullName -Force
     $psake.use_exit_on_error = $true
+}
+
+PS-Get "yam" -postInstall {
+    param($pkgDir)
+    . "$pkgDir\install.ps1" $codeBaseRoot
 }
 
 Import-Module WebAdministration -Force

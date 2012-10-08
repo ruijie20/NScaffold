@@ -1,8 +1,9 @@
 Function PSRequire($folder) {
 	Resolve-Path $folder\*.ps1 | 
     	? { -not ($_.ProviderPath.Contains(".Tests.")) } | 
-    	% { . $_.ProviderPath }
+    	% { . "$($_.ProviderPath)"}
 }
+
 
 Function PS-Include ($path) {
     $callingDir = $MyInvocation.ScriptName | Split-Path -parent
