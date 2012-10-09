@@ -1,3 +1,4 @@
+
 Function Install-NuPackage($package, $workingDir, [string]$version = "", [scriptblock] $postInstall) {
 	Write-Host "Downloading package [$package] from [$nugetSource] to [$workingDir]...." -f cyan
 	[regex]$regex = "(?i)\'$package (?<version>.*)\'"
@@ -8,11 +9,12 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
 	if($nugetSource){
 		$sourceSection = "-s $nugetSource"
 	}
-	
-	# 'xunit 1.9.1' already installed.
-	# Successfully installed 'xunit 1.9.1'.
 
-	$nuget = "$toolsRoot\nuget\nuget.exe"	
+	# need $nuget to be set, if not set, will search $root directory	
+	if(!$nuget){
+		throw "`$nuget need to be set. "
+	}
+	
 	$cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir"
 	$nuGetInstallOutput = Iex "$cmd"
 	

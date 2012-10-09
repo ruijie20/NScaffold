@@ -29,6 +29,8 @@ Resolve-Path "$libsRoot\*.ps1" |
 
 . PSRequire "$libsRoot\functions\"
 
+$nuget = "$codeBaseRoot\.nuget\nuget.exe"
+
 # register ps-get packages
 PS-Get "psake" "4.2.0.1" | % {
     $psakeModule = get-childitem $_ psake.psm1 -recurse
@@ -36,10 +38,10 @@ PS-Get "psake" "4.2.0.1" | % {
     $psake.use_exit_on_error = $true
 }
 
-PS-Get "yam" -postInstall {
-    param($pkgDir)
-    . "$pkgDir\install.ps1" $codeBaseRoot
-}
+#PS-Get "yam" -postInstall {
+#    param($pkgDir)
+#    . "$pkgDir\install.ps1" $codeBaseRoot
+#}
 
 Import-Module WebAdministration -Force
 
@@ -47,6 +49,7 @@ $buildParmeters = @{
     "codeBaseRoot" = "$codeBaseRoot"
     "libsRoot" = "$libsRoot"
     "toolsRoot" = "$toolsRoot"
+    "nuget" = $nuget
 }
 
 . $codeBaseRoot\build\environment\$env.ps1

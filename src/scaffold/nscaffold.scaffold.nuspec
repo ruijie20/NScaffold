@@ -22,6 +22,6 @@
   <files>
     <file src="tools\**" target="tools\" />    
     <file src="..\..\src-libs\**" target="tools\build\scripts\libs\" />
-    <file src="..\..\tools\nuget\**" target="tools\build\tools\nuget\" />
+    <file src="..\..\tools\nuget\**" target="tools\.nuget\" exclude="..\..\tools\nuget\*.ignore" />
   </files>
 </package>
