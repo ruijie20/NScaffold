@@ -15,9 +15,14 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
 		throw "`$nuget need to be set. "
 	}
 	
-	$cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir"
+	$cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir 2>&1"
+	Write-Host "Executing: $cmd"
 	$nuGetInstallOutput = Iex "$cmd"
-	
+
+	if($LastExitCode -ne 0){
+		throw "$nuGetInstallOutput"		
+	}
+
 	if($version){
 		$installedVersion = $version
 	} else {
@@ -25,12 +30,10 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
 	}
 
 	if ($nuGetInstallOutput -match "Unable") {
-		Write-Host "$cmd" -f yellow
 	    throw "$nuGetInstallOutput"
 	}
 
 	if(-not $installedVersion){
-		Write-Host "$cmd" -f yellow
 		throw "$nuGetInstallOutput"
 	}
 

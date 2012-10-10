@@ -20,7 +20,7 @@ Function Apply-Scaffold ($scaffoldDir, $projectPath) {
  			} else {
  				$destDir = Split-Path $destFileFullPath -Parent
  				if(-not (Test-Path $destDir)){
- 					New-Item $destDir -Type Directory 					
+ 					New-Item $destDir -Type Directory | Out-Null
  				}
 				Copy-Item $_ $destDir
 				Write-Host "Copying $_" -f yellow
@@ -31,5 +31,7 @@ Function Apply-Scaffold ($scaffoldDir, $projectPath) {
 
 Function Clean-Scaffold([string]$projectPath){
 	Remove-Item $projectPath\*.ns.ps1
-	Get-ChildItem $projectPath\build\ -filter *.ns.ps1 -Recurse | Remove-Item
+    if (Test-Path "$projectPath\build") {
+        Get-ChildItem "$projectPath\build" -filter *.ns.ps1 -Recurse | Remove-Item    
+    }	
 }

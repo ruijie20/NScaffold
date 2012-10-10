@@ -4,4 +4,5 @@
 $dir = Join-Path $(Split-Path -parent $MyInvocation.MyCommand.Definition) "tmp\pkgs\"
 $url = $dir.Replace("\", "/")
 
+&nscaffold.bat clean
 &nscaffold.bat @args -s "file:///$url"
