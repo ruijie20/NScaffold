@@ -38,10 +38,10 @@ PS-Get "psake" "4.2.0.1" | % {
     $psake.use_exit_on_error = $true
 }
 
-#PS-Get "yam" -postInstall {
-#    param($pkgDir)
-#    . "$pkgDir\install.ps1" $codeBaseRoot
-#}
+PS-Get "yam" "0.0.2" -postInstall {
+    param($pkgDir)
+    . "$pkgDir\install.ps1" $codeBaseRoot
+}
 
 Import-Module WebAdministration -Force
 

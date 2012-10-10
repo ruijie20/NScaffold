@@ -22,9 +22,11 @@ TaskSetup {
 
 Task Clean -description "clear all bin and obj under project directories (with extra outputs)" {
     Clean-Projects $projectDirs
-    $codebaseConfig.extraProjectOutputs | 
-        ? { Test-Path $_ } |
-        Remove-Item -Force -Recurse
+    if($codebaseConfig.extraProjectOutputs){
+        $codebaseConfig.extraProjectOutputs | 
+            ? { Test-Path $_ } |
+            Remove-Item -Force -Recurse
+    }
 }
 
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
