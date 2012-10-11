@@ -2,6 +2,7 @@
 # use go.ext.ps1 to extend
 param(
     $target, 
+    $packageId,
     $env="dev"
 )
 
@@ -50,17 +51,17 @@ $buildParmeters = @{
     "libsRoot" = "$libsRoot"
     "toolsRoot" = "$toolsRoot"
     "nuget" = $nuget
+    "environmentRoot" = "$codeBaseRoot\build\environment"
+    "packageId" = $packageId
 }
 
-. $codeBaseRoot\build\environment\$env.ps1
-$mergedParams = Merge-Hashtable $buildParmeters $envParameters
-
 . Register-Extension $MyInvocation.MyCommand.Path
-Invoke-Psake $scriptRoot\build.ns.ps1 $target -Framework "4.0x64" -parameters $mergedParams
+
+Invoke-Psake $scriptRoot\build.ns.ps1 $target -Framework "4.0x64" -parameters $buildParmeters
 
 if(!$psake.build_success) {
     write-host "============================= Environment: $env ==============================" -f yellow
-    $mergedParams | format-table | Out-String | write-host -f yellow
+    $buildParmeters | format-table | Out-String | write-host -f yellow
     throw "Failed to execute Task $target."
 }
 

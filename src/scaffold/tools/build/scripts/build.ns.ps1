@@ -7,9 +7,16 @@ properties{
     . PSRequire "$libsRoot\functions\"
     . PSRequire ".\functions\"
     $env:EnableNuGetPackageRestore = "true"
-    $context = @{}
-    . $codebaseRoot\codebaseConfig.ps1
+    . "$codebaseRoot\codebaseConfig.ps1"
     $yam = "$codebaseRoot\yam.ps1"
+
+    $tmpDir = "$codeBaseRoot\tmp"
+    $packageOutputDir = "$tmpDir\nupkgs"
+
+    # here include environment settings
+    if (Test-Path "$environmentRoot\$env.ps1") {
+        . "$environmentRoot\$env.ps1"
+    }    
 }
 
 include ".\build.prop.ps1"
@@ -35,12 +42,40 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
     Pop-Location
 }
 
-Task Package -depends Compile -description "Compile, package and push to nuget server"{
-    throw "comming soon. "
+Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
+
+    Clear-Directory $packageOutputDir
+    $version = &$versionManager.generate
+    Use-Directory $packageOutputDir {
+        $codebaseConfig.projectDirs | 
+            % { Get-ChildItem $_ -Recurse -Include '*.nuspec' } | 
+            % {
+                &$nuget pack $($_.FullName) -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis
+            }
+    }
+
+    $versionManager.store $version
+
+    if($packageConfig.pushRepo){
+        Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
+            &$nuget push $_.name -s $packageConfig.pushRepo $packageConfig.apiKey
+        }
+    }
 }
 
 Task Install -description "Download from nuget server and install by running 'install.ps1' in the package"{
-    throw "comming soon. "
+    if(-not $packageId){
+        throw "packageId must be specified. "
+    }
+    if($packageId){
+        $versionSection = ""
+        $version = $versionManager.retrive
+        if ($version) {
+            $versionSection = "-v $version"
+        }
+        Write-Host "$nudeploy $packageId -s $NUGET_REPO_GET -dest $NUGET_PKG_INSTALL_DIR $versionSection" -f yellow
+        &$nudeploy $packageId -s $NUGET_REPO_GET -dest $NUGET_PKG_INSTALL_DIR $versionSection        
+    }
 }
 
 Task UT {
