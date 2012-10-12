@@ -15,6 +15,7 @@ $error.clear()
 
 $codeBaseRoot = $MyInvocation.MyCommand.Path | Split-Path -parent
 
+
 $toolsRoot = "$codeBaseRoot\build\tools"
 $scriptRoot = "$codeBaseRoot\build\scripts"
 $libsRoot = "$scriptRoot\libs"
@@ -45,6 +46,7 @@ PS-Get "yam" "0.0.2" -postInstall {
 Import-Module WebAdministration -Force
 
 $buildParmeters = @{ 
+    "env" = "$env"
     "codeBaseRoot" = "$codeBaseRoot"
     "libsRoot" = "$libsRoot"
     "toolsRoot" = "$toolsRoot"
@@ -63,5 +65,3 @@ if(!$psake.build_success) {
     $buildParmeters | format-table | Out-String | write-host -f yellow
     throw "Failed to execute Task $target."
 }
-
-Exit 0

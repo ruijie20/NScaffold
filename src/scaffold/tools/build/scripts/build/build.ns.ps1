@@ -1,4 +1,4 @@
-
+$root = $MyInvocation.MyCommand.Path | Split-Path -parent
 # here setup includes
 properties{
     Resolve-Path "$libsRoot\*.ps1" | 
@@ -21,7 +21,7 @@ properties{
 
 TaskSetup {
     # check $codebaseConfig.projectDirs is configured properly
-    $codebaseConfig.projectDirs | % { Assert (Test-Path $_) "ProjectDir configuration error: Directory '$_' does not exists!" }
+    $codebaseConfig.projectDirs | % { Assert (Test-Path $_) "ProjectDir configuration error: Directory '$_' does not exist!" }
 }
 
 Task Clean -description "clear all bin and obj under project directories (with extra outputs)" {
@@ -41,7 +41,6 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
 }
 
 Task Package -description "Compile, package and push to nuget server if there's one"{
-
     Clear-Directory $packageOutputDir
     $version = &$versionManager.generate
     Use-Directory $packageOutputDir {
@@ -64,9 +63,10 @@ Task Package -description "Compile, package and push to nuget server if there's 
 Task Install -description "Download from nuget server and install by running 'install.ps1' in the package"{
     if(-not $packageId){
         throw "packageId must be specified. "
+
     }    
     $version = &$versionManager.retrive
-    
+    $nugetSource = $packageConfig.pullRepo
     Install-NuPackage $packageId $packageConfig.installDir $version | % {
         Use-Directory $_ {
             if(Test-Path "install.ps1"){
@@ -85,6 +85,6 @@ Task Help {
 }
 
 # register extensions
-if(Test-Path ".\build.ext.ps1"){
-    include ".\build.ext.ps1"    
+if(Test-Path "$root\build.ext.ps1"){
+    include "$root\build.ext.ps1"    
 }
