@@ -19,8 +19,6 @@ properties{
     }    
 }
 
-include ".\build.prop.ps1"
-
 TaskSetup {
     # check $codebaseConfig.projectDirs is configured properly
     $codebaseConfig.projectDirs | % { Assert (Test-Path $_) "ProjectDir configuration error: Directory '$_' does not exists!" }
@@ -42,7 +40,7 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
     Pop-Location
 }
 
-Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
+Task Package -description "Compile, package and push to nuget server if there's one"{
 
     Clear-Directory $packageOutputDir
     $version = &$versionManager.generate
@@ -50,11 +48,11 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         $codebaseConfig.projectDirs | 
             % { Get-ChildItem $_ -Recurse -Include '*.nuspec' } | 
             % {
-                &$nuget pack $($_.FullName) -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis
+                &$nuget pack $_.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis
             }
     }
 
-    $versionManager.store $version
+    &$versionManager.store $version
 
     if($packageConfig.pushRepo){
         Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
@@ -69,7 +67,7 @@ Task Install -description "Download from nuget server and install by running 'in
     }
     if($packageId){
         $versionSection = ""
-        $version = $versionManager.retrive
+        $version = &$versionManager.retrive
         if ($version) {
             $versionSection = "-v $version"
         }

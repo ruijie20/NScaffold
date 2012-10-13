@@ -2,7 +2,7 @@
 # use go.ext.ps1 to extend
 param(
     $target, 
-    $packageId,
+    $packageId="",
     $env="dev"
 )
 
@@ -53,6 +53,7 @@ $buildParmeters = @{
     "nuget" = $nuget
     "environmentRoot" = "$codeBaseRoot\build\environment"
     "packageId" = $packageId
+    "env" = "$env"
 }
 
 . Register-Extension $MyInvocation.MyCommand.Path
