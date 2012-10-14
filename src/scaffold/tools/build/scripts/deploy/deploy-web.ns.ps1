@@ -1,4 +1,8 @@
-param($sourcePath, $config)
+# this script should be invoked under the root directory of the package. 
+# $configFile will override the default settings of .\config.ini 
+# the responsibility of install.ps1 is to provide the $beforeAction of the package, 
+# so that the package could be configed properly before installed
+param($sourcePath=".\WebSite", $configFile, [ScriptBlock] $beforeAction)
 
 $root = $MyInvocation.MyCommand.Path | Split-Path -Parent
 
@@ -9,9 +13,8 @@ Get-ChildItem "$root\libs" -Filter *.ps1 -Recurse |
     }
 # include functions
 . PS-Require ".\functions"
-
 if([IntPtr]::size -ne 8){
-    throw "this script can only run in a 64 bit powershell";
+    throw "'WebAdministration' module can only run in 64 bit powershell"
 }
 
 # import WebAdministration module
