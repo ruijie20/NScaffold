@@ -4,8 +4,8 @@ properties{
     Resolve-Path "$libsRoot\*.ps1" | 
         ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
         % { . "$($_.ProviderPath)" }
-    . PSRequire "$libsRoot\functions\"
-    . PSRequire ".\functions\"
+    . PS-Require "$libsRoot\functions"
+    . PS-Require ".\functions"
     $env:EnableNuGetPackageRestore = "true"
     . "$codebaseRoot\codebaseConfig.ps1"
     $yam = "$codebaseRoot\yam.ps1"
@@ -14,8 +14,8 @@ properties{
     $packageOutputDir = "$tmpDir\nupkgs"
 
     # here include environment settings
-    if (Test-Path "$environmentRoot\$env.ps1") {
-        . "$environmentRoot\$env.ps1"
+    if (Test-Path "$environmentsRoot\$env.ps1") {
+        . "$environmentsRoot\$env.ps1"
     }    
 }
 
@@ -64,15 +64,15 @@ Task Package -description "Compile, package and push to nuget server if there's 
 Task Install -description "Download from nuget server and install by running 'install.ps1' in the package"{
     if(-not $packageId){
         throw "packageId must be specified. "
-    }
-    if($packageId){
-        $versionSection = ""
-        $version = &$versionManager.retrive
-        if ($version) {
-            $versionSection = "-v $version"
+    }    
+    $version = &$versionManager.retrive
+    
+    Install-NuPackage $packageId $packageConfig.installDir $version | % {
+        Use-Directory $_ {
+            if(Test-Path "install.ps1"){
+                & "install.ps1"
+            }
         }
-        Write-Host "$nudeploy $packageId -s $NUGET_REPO_GET -dest $NUGET_PKG_INSTALL_DIR $versionSection" -f yellow
-        &$nudeploy $packageId -s $NUGET_REPO_GET -dest $NUGET_PKG_INSTALL_DIR $versionSection        
     }
 }
 

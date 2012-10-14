@@ -10,17 +10,15 @@ trap{
     write-host "Error found: $_" -f red
     exit 1
 }
+
 $error.clear()
 
 $codeBaseRoot = $MyInvocation.MyCommand.Path | Split-Path -parent
-$scriptRoot = "$codeBaseRoot\build\scripts"
-if(!$libsRoot){
-  $libsRoot = "$scriptRoot\libs"
-}
 
-if(!$toolsRoot){
-    $toolsRoot = "$codeBaseRoot\build\tools"
-}
+$toolsRoot = "$codeBaseRoot\build\tools"
+$scriptRoot = "$codeBaseRoot\build\scripts"
+$libsRoot = "$scriptRoot\libs"
+$buildScriptRoot = $codeBaseRoot\build\scripts\build
 
 $env:EnableNuGetPackageRestore = "true"
 
@@ -28,7 +26,7 @@ Resolve-Path "$libsRoot\*.ps1" |
     ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
     % { . $_.ProviderPath }
 
-. PSRequire "$libsRoot\functions\"
+. PS-Require "$libsRoot\functions\"
 
 $nuget = "$codeBaseRoot\.nuget\nuget.exe"
 
@@ -51,14 +49,14 @@ $buildParmeters = @{
     "libsRoot" = "$libsRoot"
     "toolsRoot" = "$toolsRoot"
     "nuget" = $nuget
-    "environmentRoot" = "$codeBaseRoot\build\environment"
+    "environmentsRoot" = "$buildScriptRoot\environments"
     "packageId" = $packageId
     "env" = "$env"
 }
 
 . Register-Extension $MyInvocation.MyCommand.Path
 
-Invoke-Psake $scriptRoot\build.ns.ps1 $target -Framework "4.0x64" -parameters $buildParmeters
+Invoke-Psake $scriptRoot\build\build.ns.ps1 $target -Framework "4.0x64" -parameters $buildParmeters
 
 if(!$psake.build_success) {
     write-host "============================= Environment: $env ==============================" -f yellow

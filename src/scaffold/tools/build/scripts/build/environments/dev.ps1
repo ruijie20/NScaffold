@@ -1,12 +1,4 @@
-# here specify environment related settings which will be visible for all tasks
-throw "comment this line after all set. "
-
-# NUGET_REPO_PUSH = ""
-# NUGET_API_KEY = ""
-
-# NUGET_REPO_GET = "$rootDir\tmp\nupkgs"
-# NUGET_PKG_VERSION_SRC = "$rootDir\tmp\nupkgs\version.txt"
-# NUGET_PKG_INSTALL_DIR = "$rootDir\tmp\working"
+throw "Here specify environment related settings which will be visible for all tasks, comment this line after all set. "
 
 # NUGET_REPO_PUSH = "http://10.18.1.28/nuget-repo2"
 # NUGET_API_KEY = "01634e7b-0c29-4c1d-b06f-d991b0730124"

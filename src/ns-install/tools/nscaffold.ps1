@@ -13,8 +13,8 @@ Resolve-Path "$libsRoot\*.ps1" |
     ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
     % { . $_.ProviderPath }
 
-. PSRequire "$libsRoot\functions\"
-. PSRequire "$root\scripts\commands\"
+. PS-Require "$libsRoot\functions\"
+. PS-Require "$root\scripts\commands\"
 
 if(-not $command){
 	Show-Help

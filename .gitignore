@@ -1,2 +1,3 @@
-tmp
-tools/ps-gets
+/tmp
+/tools
+!/tools/nuget
