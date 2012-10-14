@@ -6,13 +6,14 @@ $root = $MyInvocation.MyCommand.Path | Split-Path -Parent
 Get-ChildItem "$root\libs" -Filter *.ps1 -Recurse | 
     ? { -not ($_.Name.Contains(".Tests.")) } | % {
         . $_.FullName
-    }    
+    }
 # include functions
 . PS-Require ".\functions"
 
 if([IntPtr]::size -ne 8){
-    throw "this script can not run in a $expected bit powershell";
+    throw "this script can only run in a 64 bit powershell";
 }
+
 # import WebAdministration module
 Get-Module -ListAvailable -Name "WebAdministration" | % {
     Import-Module WebAdministration

@@ -1,7 +1,8 @@
 Function PS-Require($folder) {
-	Resolve-Path $folder\*.ps1 | 
-    	? { -not ($_.ProviderPath.Contains(".Tests.")) } | 
-    	% { . "$($_.ProviderPath)"}
+    Get-ChildItem "$folder" -Filter *.ps1 -Recurse | 
+        ? { -not ($_.Name.Contains(".Tests.")) } | % {
+            . $_.FullName
+        }    
 }
 
 
