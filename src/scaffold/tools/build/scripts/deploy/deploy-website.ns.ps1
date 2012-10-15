@@ -1,42 +1,85 @@
 # this script should be invoked under the root directory of the package. 
 # $configFile will override the default settings of .\config.ini 
-# the responsibility of install.ps1 is to provide the $beforeAction of the package, 
+# the responsibility of install.ps1 is to provide $applyConfig, 
 # so that the package could be configed properly before installed
-param($sourcePath=".\WebSite", $configFile, [ScriptBlock] $beforeAction)
 
+# $env.ps1 need define function Install-Website to take the installAction
+param($env="dev", $sourcePath="WebSite", $configFile, [ScriptBlock] $applyConfig)
+
+$packageRoot = (Get-Location).ProviderPath
 $root = $MyInvocation.MyCommand.Path | Split-Path -Parent
+$folderName = ($MyInvocation.MyCommand.Path | Split-Path -Leaf).TrimEnd(".ns.ps1")
 
 # include libs
 Get-ChildItem "$root\libs" -Filter *.ps1 -Recurse | 
     ? { -not ($_.Name.Contains(".Tests.")) } | % {
         . $_.FullName
     }
+
 # include functions
 . PS-Require ".\functions"
+. PS-Require "$root\functions"
+
 if([IntPtr]::size -ne 8){
     throw "'WebAdministration' module can only run in 64 bit powershell"
 }
+
+Function Get-PackageInfo ($packageRoot) {
+    $packageDirName = Split-Path $packageRoot -Leaf
+    if($packageDirName -match "(?<id>.+?)\.(?<version>(?:\d+\.)*\d(?:-(?:\w|-)*)?)") {
+        @{
+            'packageId' = $matches.id
+            'version' = $matches.version
+        }        
+    } else {
+        @{
+            'packageId' = $packageDirName
+        }
+    }
+}
+
+Function Generate-Config ($packageRoot, $packageId) {
+    @{
+        'siteName' = "$packageId-site"
+        'physicalPath' = "$packageRoot\$sourcePath"
+        'appPoolName' = "$packageId-app"
+        'appPoolUser' = "$packageId-user"
+        'appPoolPassword' = "$packageId-password"
+    }
+}
+
+$packageInfo = Get-PackageInfo $packageRoot
+
+# get config
+$config = Import-Config $configFile | 
+    Patch-Config -p (Import-Config ".\config.ini") |
+    Patch-Config -p (Generate-Config $packageRoot $packageInfo.packageId)
+
+# verify config
+$webSiteName = $config.SiteName
+$appPoolName = $config.AppPoolName
+$webSitePath = "IIS:\Sites\$webSiteName"
+$appPoolPath = "IIS:\AppPools\$appPoolName"
+
+if((-not (Test-Path $webSitePath)) -and (-not $config.Port)) {
+    throw "Website [$webSiteName] does not exist. In order to create new website, specify the port!"
+}
+
+if(-not (Test-Path $appPoolPath) -and (-not ($config.appPoolUser -and $config.appPoolPassword))) {
+    throw "AppPool [$appPoolName] does not exist. In order to create the app pool, specify the AppPoolUser and AppPoolPassword!"
+}
+
 
 # import WebAdministration module
 Get-Module -ListAvailable -Name "WebAdministration" | % {
     Import-Module WebAdministration
 }
 
-Function Invoke-WebSiteDeploymentProcedure($webSiteName, $packageRoot, $LoadBalancerPollingDurationInSeconds, $scriptBlockForDeployment, $healthCheckPath){
-    if(Test-WebsiteMatch -webSiteName $webSiteName -PackageRoot $packageRoot -healthCheckPath $healthCheckPath){
-        Trace-ProgressMsg "Website [$webSiteName] already deployed to target version. Skip deployment."
-        Add-ToLoadBalancer $webSiteName
-        return
-    }
-
-    Suspend-Website -webSiteName $webSiteName `
-        -loadBalancerPollingDurationInSeconds $LoadBalancerPollingDurationInSeconds `
-        -scriptBlockDuringSuspension {        
-            & $scriptBlockForDeployment
-            Assert-WebsiteMatch -webSiteName $webSiteName -PackageRoot $packageRoot -healthCheckPath $healthCheckPath
-        }
+if($applyConfig){
+    & $applyConfig
 }
 
+# nupkg folder (?<id>.+?)\.(?<version>(?:\d+\.)*\d(?:-(?:\w|-)*)?)
 Function Install-ToWebsite($sourcePath, $iisConfig) {
     if((-not $sourcePath) -or (-not $iisConfig)){
         throw "Parameters Could Not Null!"
@@ -49,6 +92,7 @@ Function Install-ToWebsite($sourcePath, $iisConfig) {
     $appPoolName = $iisConfig.AppPoolName
     $appPoolUser = $iisConfig.AppPoolUser
     $appPoolPassword = $iisConfig.AppPoolPassword
+
     $webSitePath = "IIS:\Sites\$webSiteName"
     $appPoolPath = "IIS:\AppPools\$appPoolName"
 
@@ -111,60 +155,6 @@ Function Install-ToWebsite($sourcePath, $iisConfig) {
     }
 }
 
-Function Install-WebApplication($sourcePath, $iisConfig){
-    $appPoolName = $iisConfig.AppPoolName
-    $webSiteName = $iisConfig.SiteName
-    $alias       = $iisConfig.Alias
-    $physicalPath = $iisConfig.PhysicalPath
-    $applicationPath = "IIS:\Sites\$webSiteName\$alias"
-    $webSitePath = "IIS:\Sites\$webSiteName"
-    $appPoolPath = "IIS:\AppPools\$appPoolName"
-
-    if((-not $sourcePath) -or (-not $iisConfig)){
-        throw "Parameters Could Not Null!"
-    }
-    if(-not $webSiteName){
-        throw "Parameter(iisConfig.siteName) Could Not Null!"
-    }
-    if(-not $alias){
-        throw "Parameter(iisConfig.alias) Could Not Null!"
-    }
-    if(-not $physicalPath){
-        throw "Parameter(iisConfig.physicalPath) Could Not Null!"
-    }
-
-    if(-not $appPoolName) {
-        throw "Parameter(iisConfig.appPoolName) Could Not Null!"
-    }
-
-    if(-not (Test-Path $appPoolPath)) {
-        throw "AppPool:$appPoolName is not exist,Please create AppPool before deploy Application!"
-    }
-
-    if (-not (Test-Path $webSitePath)){
-         throw "Website:$webSiteName is not exist,Please create Website before deploy Application!"
-    }
-    Trace-ProgressMsg "Install-WebApplication from $sourcePath to site:"
-    Write-Hashtable $iisConfig
-
-    Assert-SuspendedFromLoadBalancer $webSiteName
-
-    Trace-Progress "Deploy web application $webSiteName\$Alias" {
-        if (-not (Test-Path $applicationPath)) {
-            New-WebApplication -Name $alias -Site $webSiteName | Out-Null
-        }
-        if($sourcePath -ne $physicalPath){
-            Set-ItemProperty $applicationPath physicalPath "c:\notexistfolder"
-            SLEEP -second 2
-            Remove-IfExist $physicalPath 
-            Copy-Item $sourcePath -destination $physicalPath -recurse
-        }
-        Set-ItemProperty $applicationPath physicalPath $physicalPath
-        Set-ItemProperty $applicationPath applicationPool $appPoolName
-        Start-Website $webSiteName   
-    }
-}
-
 # ========================= app pool ============================
 Function Reset-AppPool($appPoolName, $username, $password){
     if(-not $appPoolName){
@@ -178,14 +168,15 @@ Function Reset-AppPool($appPoolName, $username, $password){
     }
     Trace-Progress "Reset-AppPool" {
         $appPoolPath = "IIS:\AppPools\$appPoolName"
-        if(-not(Test-IISServiceStatus)) {
-            Start-IISServices
+        if(-not(Test-ServiceStatus "W3SVC")) {
+            Set-Service -Name WAS -Status Running -StartupType Automatic
+            Set-Service -Name W3SVC -Status Running -StartupType Automatic
         }
-        if ((Test-Path $appPoolPath) -eq $false) {
+        if (-not (Test-Path $appPoolPath)) {
             New-WebAppPool $appPoolName | Out-Null
             Set-ItemProperty $appPoolPath ProcessModel.IdentityType 2
         }
-        if($username -ne $null){
+        if(-not $username){
             Set-ItemProperty $appPoolPath ProcessModel.Username $username
             Set-ItemProperty $appPoolPath ProcessModel.Password $password
             Set-ItemProperty $appPoolPath ProcessModel.IdentityType 3
@@ -194,24 +185,11 @@ Function Reset-AppPool($appPoolName, $username, $password){
     }
 }
 
-Function Test-IISServiceStatus {
-    Test-ServiceStatus "W3SVC"
+Function Test-ServiceStatus($name, $status="Running") {
+    (Get-Service -Name $name | ? {$_.Status -eq $status} | Measure-Object).Count -eq 1
 }
 
-# ========================= misc ============================
-Function Reset-WebVirtualDirectory($dirName, $deployPath, $webSiteName = "Default Web Site"){
-    Trace-Progress "Reset-WebVirtualDirectory: $dirName" {  
-        $webSitePath = "IIS:\Sites\$webSiteName\$dirName"
-        if (Test-Path $webSitePath) {Remove-Item $webSitePath -r} 
-        New-WebVirtualDirectory -Name $dirName -Site $webSiteName -PhysicalPath $deployPath | Out-Null
-    }
-}
-
-Function Start-IISServices($name) {
-    Set-Service -Name WAS -Status Running -StartupType Automatic
-    Set-Service -Name W3SVC -Status Running -StartupType Automatic
-}
-
-Function Test-Website($websiteName) {
-    Test-Path "IIS:\Sites\$websiteName"
+Import-Module . "$folderName\$env.psm"    
+Install-Website $config.WebsiteName $packageRoot {
+    Install-ToWebsite $sourcePath, $config
 }
