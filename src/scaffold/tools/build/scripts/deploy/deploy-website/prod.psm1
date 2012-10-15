@@ -1,7 +1,7 @@
 
-Function Install-Website($websiteName, $packageRoot, [ScriptBlock] $installAction) {
+Function Install-Website($websiteName, $packageInfo, [ScriptBlock] $installAction) {
 
-    if(Match-WebsiteWithPackage $websiteName $packageRoot $healthCheckPath){
+    if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
         Trace-ProgressMsg "Website [$websiteName] already deployed to target version. Skip deployment."
         Add-ToLoadBalancer $websiteName
     } else {
@@ -69,10 +69,9 @@ Function Add-ToLoadBalancer($websiteName) {
     }
 }
 
-Function Match-WebsiteWithPackage($websiteName, $packageRoot, $healthCheckPath){
+Function Match-WebsiteWithPackage($websiteName, $packageInfo, $healthCheckPath){
 
-    $packageInfo = Get-PackageInfo $packageRoot
-    Write-Host "Source Package [ $($packageInfo.id) : $($packageInfo.version) ]"
+    Write-Host "Source Package [ $($packageInfo.packageId) : $($packageInfo.version) ]"
 
     if(-not(Test-Path "IIS:\Sites\$websiteName")) {
         $false
@@ -91,17 +90,6 @@ Function Match-WebsiteWithPackage($websiteName, $packageRoot, $healthCheckPath){
             }
             $true
         }
-    }
-}
-
-Function Get-PackageInfo($packageRoot){
-    $packageFolderName = $packageRoot | Split-Path -Leaf
-    if(-not ($packageFolderName -match "(\D*)\.(.*)")){
-        throw "Package Root [$packageRoot] doesn't have package info"
-    }
-    @{
-        id = $matches[1]
-        version = $matches[2]
     }
 }
 
