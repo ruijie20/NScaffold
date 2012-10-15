@@ -1,26 +1,4 @@
-
-Function Install-Website($websiteName, $packageInfo, [ScriptBlock] $installAction) {
-
-    if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
-        Trace-ProgressMsg "Website [$websiteName] already deployed to target version. Skip deployment."
-        Add-ToLoadBalancer $websiteName
-    } else {
-        if(-not $loadBalancerPollingDurationInSeconds){
-            $loadBalancerPollingDurationInSeconds = 30
-        }
-        try{
-            Remove-FromLoadBalancer $websiteName
-            Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website..."
-            Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
-            Assert-SuspendedFromLoadBalancer $websiteName
-            & $installAction
-            Add-ToLoadBalancer $websiteName
-        }catch{
-            Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
-            throw $_
-        }
-    }   
-}
+param($websiteName, $packageInfo, [ScriptBlock] $installAction)
 
 Function Get-PhysicalPath($iisPath){
     $physicalPath = $(Get-ItemProperty $iisPath).physicalPath
@@ -170,4 +148,22 @@ Function Trace-Progress($msg, $block, $ignoreTrackProgress=7) {
     Write-Host "$mark Step $msg done. ($durationMS ms)" -f green
 }
 
-Export-ModuleMember -function Install-Website
+if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
+    Trace-ProgressMsg "Website [$websiteName] already deployed to target version. Skip deployment."
+    Add-ToLoadBalancer $websiteName
+} else {
+    if(-not $loadBalancerPollingDurationInSeconds){
+        $loadBalancerPollingDurationInSeconds = 30
+    }
+    try{
+        Remove-FromLoadBalancer $websiteName
+        Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website..."
+        Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
+        Assert-SuspendedFromLoadBalancer $websiteName
+        & $installAction
+        Add-ToLoadBalancer $websiteName
+    }catch{
+        Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
+        throw $_
+    }
+}   

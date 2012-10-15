@@ -19,7 +19,7 @@ $codeBaseRoot = $MyInvocation.MyCommand.Path | Split-Path -parent
 $toolsRoot = "$codeBaseRoot\build\tools"
 $scriptRoot = "$codeBaseRoot\build\scripts"
 $libsRoot = "$scriptRoot\libs"
-$buildScriptRoot = $codeBaseRoot\build\scripts\build
+$buildScriptRoot = "$codeBaseRoot\build\scripts\build"
 
 $env:EnableNuGetPackageRestore = "true"
 
@@ -53,7 +53,6 @@ $buildParmeters = @{
     "nuget" = $nuget
     "environmentsRoot" = "$buildScriptRoot\environments"
     "packageId" = $packageId
-    "env" = "$env"
 }
 
 . Register-Extension $MyInvocation.MyCommand.Path
