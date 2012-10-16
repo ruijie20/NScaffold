@@ -1,11 +1,17 @@
 # this script should be invoked under the root directory of the package. 
 # the responsibility of install.ps1 is to provide $applyConfig, 
 # $env.ps1 need define function Install-Website to take the installAction
-param($env="dev", $sourcePath="WebSite", $configFile, [ScriptBlock] $applyConfig)
+param($sourcePath="WebSite", $configFile, $features=@(), [ScriptBlock] $applyConfig)
+
+trap {
+    throw $_
+}
+
 $packageRoot = (Get-Location).ProviderPath
 $sourcePath = Join-Path $packageRoot $sourcePath
 $root = $MyInvocation.MyCommand.Path | Split-Path -Parent
 $folderName = ($MyInvocation.MyCommand.Path | Split-Path -Leaf).TrimEnd(".ns.ps1")
+$featuresFolder = "$root\$folderName"
 
 # include libs
 Get-ChildItem "$root\libs" -Filter *.ps1 -Recurse | 
@@ -37,32 +43,31 @@ if($applyConfig){
     & $applyConfig $config
 }
 
-. "$folderName\$env.ps1" $config.siteName $packageInfo {
-    param([switch]$force)
+$installAction = {
+    param([switch]$renew)
 
     $webSiteName = $config.siteName
     $webSitePath = "IIS:\Sites\$webSiteName"
     $physicalPath = $config.physicalPath
-
     $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
     New-Item $tempDir -type Directory | Out-Null
-    if ($force) {
-        # rebuild website
+
+    if ($renew) {
         if (-not $config.Port) {
             throw "In order to create new website, please specify the port first!"
         }
-        Remove-Website $webSiteName
+        if(Test-Path $webSitePath) {
+            Remove-Website $webSiteName
+        }
         Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword
         New-Website -Name $webSiteName -Port $config.Port -ApplicationPool $config.appPoolName -PhysicalPath $tempDir | Out-Null
-    } else{
-        # check website
-        if(-not (Test-Path $webSitePath)) {
-            throw "Website [$webSitePath] does not exists!"
-        }
-        Set-ItemProperty $webSitePath physicalPath $tempDir
     }
 
-    Write-Debug "Website [$webSiteName] is ready."
+    if(-not (Test-Path $webSitePath)) {
+        throw "Website [$webSitePath] does not exists!"
+    }
+    Set-ItemProperty $webSitePath physicalPath $tempDir
+    Write-Host "Website [$webSiteName] is ready."
     SLEEP -second 2
 
     if($sourcePath -ne $physicalPath){
@@ -72,5 +77,52 @@ if($applyConfig){
     Set-ItemProperty $webSitePath physicalPath $physicalPath
     Start-Website $webSiteName
     SLEEP -second 2
-    Remove-Item $tempDir -force -recurse -ErrorAction SilentlyContinue | Out-Null
+    Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 }
+
+foreach ($feature in $features){
+    if(Test-Path "$featuresFolder\$feature.ps1"){
+        $installAction = {
+            & "$featuresFolder\$feature.ps1" $config $packageInfo $installAction
+        }
+    }
+}
+
+& $installAction
+
+# . "$featuresFolder\$env.ps1" $config.siteName $packageInfo {
+#     param([switch]$renew)
+
+#     $webSiteName = $config.siteName
+#     $webSitePath = "IIS:\Sites\$webSiteName"
+#     $physicalPath = $config.physicalPath
+#     $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
+#     New-Item $tempDir -type Directory | Out-Null
+
+#     if ($renew) {
+#         if (-not $config.Port) {
+#             throw "In order to create new website, please specify the port first!"
+#         }
+#         if(Test-Path $webSitePath) {
+#             Remove-Website $webSiteName
+#         }
+#         Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword
+#         New-Website -Name $webSiteName -Port $config.Port -ApplicationPool $config.appPoolName -PhysicalPath $tempDir | Out-Null
+#     }
+
+#     if(-not (Test-Path $webSitePath)) {
+#         throw "Website [$webSitePath] does not exists!"
+#     }
+#     Set-ItemProperty $webSitePath physicalPath $tempDir
+#     Write-Host "Website [$webSiteName] is ready."
+#     SLEEP -second 2
+
+#     if($sourcePath -ne $physicalPath){
+#         Clear-Directory $physicalPath
+#         Copy-Item $sourcePath -destination $physicalPath -recurse
+#     }    
+#     Set-ItemProperty $webSitePath physicalPath $physicalPath
+#     Start-Website $webSiteName
+#     SLEEP -second 2
+#     Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+# }

@@ -1,4 +1,4 @@
-param($websiteName, $packageInfo, [ScriptBlock] $installAction)
+($websiteName, $packageInfo, [ScriptBlock] $installAction)
 
 Function Get-PhysicalPath($iisPath){
     $physicalPath = $(Get-ItemProperty $iisPath).physicalPath
@@ -162,6 +162,10 @@ if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
         Assert-SuspendedFromLoadBalancer $websiteName
         & $installAction
         Add-ToLoadBalancer $websiteName
+        if(-not Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
+            throw "Site [$webSiteName] doesn't match package [$($packageInfo.packageId)]"
+        }
+        
     }catch{
         Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
         throw $_

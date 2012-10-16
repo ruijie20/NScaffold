@@ -63,10 +63,15 @@ Task Package -description "Compile, package and push to nuget server if there's 
 Task Install -description "Download from nuget server and install by running 'install.ps1' in the package"{
     if(-not $packageId){
         throw "packageId must be specified. "
-
     }    
     $version = &$versionManager.retrive
     $nugetSource = $packageConfig.pullRepo
+
+    $outputDir = "$($packageConfig.installDir)\$packageId.$version"
+    if(Test-Path $outputDir){
+        Remove-Item "$outputDir\*" -Force -Recurse
+    }
+
     Install-NuPackage $packageId $packageConfig.installDir $version | % {
         Use-Directory $_ {
             if(Test-Path "install.ps1"){
