@@ -1,7 +1,7 @@
 Function Reset-AppPool($appPoolName, $username, $password){
     $appPoolPath = "IIS:\AppPools\$appPoolName"
     if(-not (Test-User $username)){
-        New-LocalUser $username $appPoolPassword | Out-Null
+        New-LocalUser $username $password | Out-Null
         Set-LocalGroup $username "IIS_IUSRS" -add
     }    
     Write-Host "User [$username] is ready."

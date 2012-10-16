@@ -1,4 +1,7 @@
-($websiteName, $packageInfo, [ScriptBlock] $installAction)
+param($config, $packageInfo, [ScriptBlock] $installAction)
+
+$webSiteName = $config.siteName
+$webSitePath = "IIS:\Sites\$webSiteName"
 
 Function Get-PhysicalPath($iisPath){
     $physicalPath = $(Get-ItemProperty $iisPath).physicalPath

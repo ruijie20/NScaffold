@@ -5,7 +5,6 @@ Function PS-Require($folder) {
         }    
 }
 
-
 Function PS-Include ($path) {
     $callingDir = $MyInvocation.ScriptName | Split-Path -parent
     $targetScript = Join-Path $callingDir $path

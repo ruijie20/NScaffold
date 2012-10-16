@@ -40,32 +40,24 @@ Get-Module -ListAvailable -Name "WebAdministration" | % {
 }
 
 if($applyConfig){
-    & $applyConfig $config
+    & $applyConfig $config $sourcePath
 }
 
+# $sourcePath and $config is visible to script file due to the parent scope is this file
+# so it is also visible to this action due to it's called by those scripts
 $installAction = {
     param([switch]$renew)
 
     $webSiteName = $config.siteName
     $webSitePath = "IIS:\Sites\$webSiteName"
     $physicalPath = $config.physicalPath
-    $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
-    New-Item $tempDir -type Directory | Out-Null
-
-    if ($renew) {
-        if (-not $config.Port) {
-            throw "In order to create new website, please specify the port first!"
-        }
-        if(Test-Path $webSitePath) {
-            Remove-Website $webSiteName
-        }
-        Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword
-        New-Website -Name $webSiteName -Port $config.Port -ApplicationPool $config.appPoolName -PhysicalPath $tempDir | Out-Null
-    }
 
     if(-not (Test-Path $webSitePath)) {
         throw "Website [$webSitePath] does not exists!"
     }
+
+    $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
+    New-Item $tempDir -type Directory | Out-Null
     Set-ItemProperty $webSitePath physicalPath $tempDir
     Write-Host "Website [$webSiteName] is ready."
     SLEEP -second 2
@@ -80,49 +72,15 @@ $installAction = {
     Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
 }
 
+$installClosure = Make-Closure $installAction
+
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
-        $installAction = {
-            & "$featuresFolder\$feature.ps1" $config $packageInfo $installAction
-        }
+        $installClosure = Make-Closure { 
+            param($scriptFile, $c)
+            & "$scriptFile" $config $packageInfo {Run-Closure $c}
+        } "$featuresFolder\$feature.ps1", $installClosure
     }
 }
 
-& $installAction
-
-# . "$featuresFolder\$env.ps1" $config.siteName $packageInfo {
-#     param([switch]$renew)
-
-#     $webSiteName = $config.siteName
-#     $webSitePath = "IIS:\Sites\$webSiteName"
-#     $physicalPath = $config.physicalPath
-#     $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
-#     New-Item $tempDir -type Directory | Out-Null
-
-#     if ($renew) {
-#         if (-not $config.Port) {
-#             throw "In order to create new website, please specify the port first!"
-#         }
-#         if(Test-Path $webSitePath) {
-#             Remove-Website $webSiteName
-#         }
-#         Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword
-#         New-Website -Name $webSiteName -Port $config.Port -ApplicationPool $config.appPoolName -PhysicalPath $tempDir | Out-Null
-#     }
-
-#     if(-not (Test-Path $webSitePath)) {
-#         throw "Website [$webSitePath] does not exists!"
-#     }
-#     Set-ItemProperty $webSitePath physicalPath $tempDir
-#     Write-Host "Website [$webSiteName] is ready."
-#     SLEEP -second 2
-
-#     if($sourcePath -ne $physicalPath){
-#         Clear-Directory $physicalPath
-#         Copy-Item $sourcePath -destination $physicalPath -recurse
-#     }    
-#     Set-ItemProperty $webSitePath physicalPath $physicalPath
-#     Start-Website $webSiteName
-#     SLEEP -second 2
-#     Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
-# }
+Run-Closure $installClosure
