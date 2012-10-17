@@ -23,11 +23,10 @@ $buildScriptRoot = "$codeBaseRoot\build\scripts\build"
 
 $env:EnableNuGetPackageRestore = "true"
 
-Resolve-Path "$libsRoot\*.ps1" | 
-    ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-    % { . $_.ProviderPath }
-
-. PS-Require "$libsRoot\functions\"
+Get-ChildItem $libsRoot -Filter *.ps1 -Recurse | 
+    ? { -not ($_.Name.Contains(".Tests.")) } | % {
+        . $_.FullName
+    }
 
 $nuget = "$codeBaseRoot\.nuget\nuget.exe"
 

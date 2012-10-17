@@ -83,7 +83,7 @@ Function Get-HealthCheckUrl($websiteName, $healthCheckPath){
     $firstBinding = $(Get-ItemProperty $iisPath).Bindings.Collection[0]
     $protocol = $firstBinding.protocol
     $bindingInformation = $firstBinding.bindingInformation
-    $ip, $port, $host = $bindingInformation -split ':'
+    $ip, $port, $hostName = $bindingInformation -split ':'
     if($ip -eq "*"){
         $ip = 'localhost'
     }
@@ -165,7 +165,7 @@ if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
         Assert-SuspendedFromLoadBalancer $websiteName
         & $installAction
         Add-ToLoadBalancer $websiteName
-        if(-not Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
+        if(-not (Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath)){
             throw "Site [$webSiteName] doesn't match package [$($packageInfo.packageId)]"
         }
         

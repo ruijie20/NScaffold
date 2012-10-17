@@ -1,9 +1,9 @@
-Function Generate-Config ($packageRoot, $packageId) {
+Function Generate-Config ($sourcePath, $packageId) {
     @{
-        'siteName' = "$packageId-site"
-        'physicalPath' = "$packageRoot\$sourcePath"
+        'siteName' = "$packageId"
+        'physicalPath' = "$sourcePath"
         'appPoolName' = "$packageId-app"
         'appPoolUser' = "$packageId-user"
-        'appPoolPassword' = "$packageId-password"
+        'appPoolPassword' = "1111aaaa#"
     }
 }

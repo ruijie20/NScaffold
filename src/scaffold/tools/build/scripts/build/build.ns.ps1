@@ -1,10 +1,11 @@
 $root = $MyInvocation.MyCommand.Path | Split-Path -parent
 # here setup includes
 properties{
-    Resolve-Path "$libsRoot\*.ps1" | 
-        ? { -not ($_.ProviderPath.Contains(".Tests.")) } |
-        % { . "$($_.ProviderPath)" }
-    . PS-Require "$libsRoot\functions"
+    Get-ChildItem $libsRoot -Filter *.ps1 -Recurse | 
+        ? { -not ($_.Name.Contains(".Tests.")) } | % {
+            . $_.FullName
+        }
+
     . PS-Require ".\functions"
     $env:EnableNuGetPackageRestore = "true"
     . "$codebaseRoot\codebaseConfig.ps1"
@@ -60,7 +61,7 @@ Task Package -description "Compile, package and push to nuget server if there's 
     }
 }
 
-Task Install -description "Download from nuget server and install by running 'install.ps1' in the package"{
+Task Deploy -description "Download from nuget server, deploy and install by running 'install.ps1' in the package"{
     if(-not $packageId){
         throw "packageId must be specified. "
     }    

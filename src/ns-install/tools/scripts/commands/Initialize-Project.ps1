@@ -16,14 +16,14 @@ Function Apply-Scaffold ($scaffoldDir, $projectPath) {
  		% {
  			$destFileFullPath = [System.IO.Path]::GetFullPath((Join-Path $projectPath (Resolve-Path $_ -Relative)))
  			if (Test-Path $destFileFullPath) {
- 				Write-Host "Skipping $destFileFullPath" -f yellow
+ 				Write-Host "Skipping $destFileFullPath" -f green
  			} else {
  				$destDir = Split-Path $destFileFullPath -Parent
  				if(-not (Test-Path $destDir)){
  					New-Item $destDir -Type Directory | Out-Null
  				}
 				Copy-Item $_ $destDir
-				Write-Host "Copying $_" -f yellow
+				Write-Host "Copying $_" -f green
  			} 			
  		}
  	Pop-Location
