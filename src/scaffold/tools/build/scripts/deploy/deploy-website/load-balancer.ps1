@@ -50,81 +50,78 @@ Function Add-ToLoadBalancer($websiteName) {
     }
 }
 
-Function Match-WebsiteWithPackage($websiteName, $packageInfo, $healthCheckPath){
+# Function Match-WebsiteWithPackage($websiteName, $packageInfo, $healthCheckPath){
 
-    Write-Host "Source Package [ $($packageInfo.packageId) : $($packageInfo.version) ]"
+#     Write-Host "Source Package [ $($packageInfo.packageId) : $($packageInfo.version) ]"
 
-    if(-not(Test-Path "IIS:\Sites\$websiteName")) {
-        $false
-    } else {
-        $healthCheckUrl = Get-HealthCheckUrl $websiteName $healthCheckPath
-        Write-Host "Target HealthCheckUrl: [$healthCheckUrl]"
-        $healthCheckPage = Get-HealthCheckPage $healthCheckUrl
-        Write-Host "HealthCheckPage `n$healthCheckPage"
-        $match = $healthCheckPage -match "Version=$($packageInfo.version)\W"
+#     if(-not(Test-Path "IIS:\Sites\$websiteName")) {
+#         $false
+#     } else {
+#         $healthCheckUrl = Get-HealthCheckUrl $websiteName $healthCheckPath
+#         Write-Host "Target HealthCheckUrl: [$healthCheckUrl]"
+#         $healthCheckPage = Get-HealthCheckPage $healthCheckUrl
+#         Write-Host "HealthCheckPage `n$healthCheckPage"
+#         $match = $healthCheckPage -match "Version=$($packageInfo.version)\W"
 
-        if(-not $match){
-            $false
-        } else {
-            if($healthCheckPage -match ".+=Failure\s*`$") {
-                Write-Warning "Health page reported there are some failures after the deployment!"
-            }
-            $true
-        }
-    }
-}
+#         if(-not $match){
+#             $false
+#         } else {
+#             if($healthCheckPage -match ".+=Failure\s*`$") {
+#                 Write-Warning "Health page reported there are some failures after the deployment!"
+#             }
+#             $true
+#         }
+#     }
+# }
 
-Function Test-Website($websiteName) {
-    Test-Path "IIS:\Sites\$websiteName"
-}
 
-Function Get-HealthCheckUrl($websiteName, $healthCheckPath){
-    $iisPath = "IIS:\Sites\$websiteName"
-    $firstBinding = $(Get-ItemProperty $iisPath).Bindings.Collection[0]
-    $protocol = $firstBinding.protocol
-    $bindingInformation = $firstBinding.bindingInformation
-    $ip, $port, $hostName = $bindingInformation -split ':'
-    if($ip -eq "*"){
-        $ip = 'localhost'
-    }
-    if(-not $healthCheckPath){
-        $healthCheckPath = "/health?check=all"
-    }
-    "$($protocol)://$($ip):$port$healthCheckPath"
-}
+# Function Get-HealthCheckUrl($websiteName, $healthCheckPath){
+#     $iisPath = "IIS:\Sites\$websiteName"
+#     $firstBinding = $(Get-ItemProperty $iisPath).Bindings.Collection[0]
+#     $protocol = $firstBinding.protocol
+#     $bindingInformation = $firstBinding.bindingInformation
+#     $ip, $port, $hostName = $bindingInformation -split ':'
+#     if($ip -eq "*"){
+#         $ip = 'localhost'
+#     }
+#     if(-not $healthCheckPath){
+#         $healthCheckPath = "/health?check=all"
+#     }
+#     "$($protocol)://$($ip):$port$healthCheckPath"
+# }
 
-Function Get-HealthCheckPage($healthCheckUrl){
-    Skip-HTTSCertValidation
-    Redo-OnException -RetryCount 3 -SleepSecond 3 -RedoActionScriptBlock {
-        (New-Object System.Net.WebClient).DownloadString($healthCheckUrl)
-    }
-}
+# Function Get-HealthCheckPage($healthCheckUrl){
+#     Skip-HTTSCertValidation
+#     Redo-OnException -RetryCount 3 -SleepSecond 3 -RedoActionScriptBlock {
+#         (New-Object System.Net.WebClient).DownloadString($healthCheckUrl)
+#     }
+# }
 
-Function Skip-HTTSCertValidation{
-    $SetSuccessValidatorSrc = @'
-    public static void SetSuccessValidator()
-    {
-        System.Net.ServicePointManager.ServerCertificateValidationCallback = delegate { return true;} ;
-    }
-'@
-    Add-Type -Namespace PSUtils -Name CSRunner -MemberDefinition $SetSuccessValidatorSrc
-    [PSUtils.CSRunner]::SetSuccessValidator()
-}
+# Function Skip-HTTSCertValidation{
+#     $SetSuccessValidatorSrc = @'
+#     public static void SetSuccessValidator()
+#     {
+#         System.Net.ServicePointManager.ServerCertificateValidationCallback = delegate { return true;} ;
+#     }
+# '@
+#     Add-Type -Namespace PSUtils -Name CSRunner -MemberDefinition $SetSuccessValidatorSrc
+#     [PSUtils.CSRunner]::SetSuccessValidator()
+# }
 
-Function Redo-OnException($RetryCount = 3, $SleepSecond = 0, $RedoActionScriptBlock){
-    for ($i=0; $true; $i++){
-        try{
-            return (& $RedoActionScriptBlock)
-        }catch{
-            if($i -lt $RetryCount){
-                Write-Host "Error and retry: $_"
-                sleep $SleepSecond
-            }else{
-                throw $_
-            }
-        }
-    }
-}
+# Function Redo-OnException($RetryCount = 3, $SleepSecond = 0, $RedoActionScriptBlock){
+#     for ($i=0; $true; $i++){
+#         try{
+#             return (& $RedoActionScriptBlock)
+#         }catch{
+#             if($i -lt $RetryCount){
+#                 Write-Host "Error and retry: $_"
+#                 sleep $SleepSecond
+#             }else{
+#                 throw $_
+#             }
+#         }
+#     }
+# }
 
 Function New-Mark($ignore = 7) {
     $stack = Get-PSCallStack
@@ -151,26 +148,26 @@ Function Trace-Progress($msg, $block, $ignoreTrackProgress=7) {
     Write-Host "$mark Step $msg done. ($durationMS ms)" -f green
 }
 
-if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
-    Trace-ProgressMsg "Website [$websiteName] already deployed to target version. Skip deployment."
+# if(Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath){
+#     Trace-ProgressMsg "Website [$websiteName] already deployed to target version. Skip deployment."
+#     Add-ToLoadBalancer $websiteName
+# } else {
+if(-not $loadBalancerPollingDurationInSeconds){
+    $loadBalancerPollingDurationInSeconds = 30
+}
+try{
+    Remove-FromLoadBalancer $websiteName
+    Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website..."
+    Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
+    Assert-SuspendedFromLoadBalancer $websiteName
+    & $installAction
     Add-ToLoadBalancer $websiteName
-} else {
-    if(-not $loadBalancerPollingDurationInSeconds){
-        $loadBalancerPollingDurationInSeconds = 30
-    }
-    try{
-        Remove-FromLoadBalancer $websiteName
-        Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website..."
-        Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
-        Assert-SuspendedFromLoadBalancer $websiteName
-        & $installAction
-        Add-ToLoadBalancer $websiteName
-        if(-not (Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath)){
-            throw "Site [$webSiteName] doesn't match package [$($packageInfo.packageId)]"
-        }
-        
-    }catch{
-        Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
-        throw $_
-    }
-}   
+    
+}catch{
+    Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
+    throw $_
+}
+
+# if(-not (Match-WebsiteWithPackage $websiteName $packageInfo $healthCheckPath)){
+#     throw "Site [$webSiteName] doesn't match package [$($packageInfo.packageId)]"
+# }

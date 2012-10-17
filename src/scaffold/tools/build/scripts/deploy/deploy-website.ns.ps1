@@ -91,10 +91,15 @@ $installClosure = Make-Closure $installAction
 
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
+        $featureScript = "$featuresFolder\$feature.ps1"
+    } elseif(Test-Path "$featuresFolder\$feature.ns.ps1") {
+        $featureScript = "$featuresFolder\$feature.ns.ps1"
+    }
+    if($featureScript){
         $installClosure = Make-Closure { 
             param($scriptFile, $c)
             & "$scriptFile" $config $packageInfo {Run-Closure $c}
-        } "$featuresFolder\$feature.ps1", $installClosure
+        } "$featureScript", $installClosure
     }
 }
 
