@@ -32,9 +32,14 @@ $nuget = "$codeBaseRoot\.nuget\nuget.exe"
 
 # register ps-get packages
 PS-Get "psake" "4.2.0.1" | % {
-    $psakeModule = get-childitem $_ psake.psm1 -recurse
+    $psakeModule = Get-ChildItem $_ psake.psm1 -recurse
     Import-Module $psakeModule.FullName -Force
     $psake.use_exit_on_error = $true
+}
+
+PS-Get "NScaffold.NuDeploy" "0.0.2" | % {
+    $nudeployModule = Get-ChildItem $_ nudeploy.psm1 -recurse
+    Import-Module $nudeployModule.FullName -Force
 }
 
 PS-Get "yam" "0.0.2" -postInstall {

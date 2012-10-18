@@ -15,7 +15,7 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     }
     
     $cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir 2>&1"
-    Write-Host "Executing: $cmd" -f yellow
+    Write-Host "Executing: $cmd"
 
     $nuGetInstallOutput = Iex "$cmd"
 
