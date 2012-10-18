@@ -26,7 +26,7 @@ A build &amp; deploy scaffold scripts generator for .net project development.
 
 How to install? 
 
-Use chocolatey. 
+Use chocolatey. Maybe change to PsGet.  
 
     cinst nscaffold
 
@@ -77,3 +77,10 @@ version file locate function (pass version information for different build stage
 
 > remote $pkgVersion = get from somewhere
 
+----------------
+
+NuDeploy
+============
+
+PowerShell module help to deploy nuget packages. 
+Use psget or manully install them as PSModule

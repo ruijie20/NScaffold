@@ -65,15 +65,15 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     if(-not $packageId){
         throw "packageId must be specified. "
     }    
-    $version = &$versionManager.retrive
-    $nugetSource = $packageConfig.pullRepo
-
-    $outputDir = "$($packageConfig.installDir)\$packageId.$version"
+    $version = &$versionManager.retrive    
+    $installDir = $packageConfig.installDir
+    $outputDir = "$installDir\$packageId.$version"
     if(Test-Path $outputDir){
         Remove-Item "$outputDir\*" -Force -Recurse
     }
 
-    Install-NuPackage $packageId $packageConfig.installDir $version | % {
+    $nugetSource = $packageConfig.pullRepo
+    Install-NuPackage $packageId $installDir $version | % {
         Use-Directory $_ {
             if(Test-Path "install.ps1"){
                 & "install.ps1"
@@ -82,7 +82,7 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     }
 }
 
-Task UT {
+Task UT-Local {
     throw "comming soon. "
 }
 
