@@ -7,6 +7,7 @@ if(test-path .\tmp\pkgs\){
 
 .\tools\nuget\NuGet.exe pack .\src\ns-install\nscaffold.nuspec -NoPackageAnalysis -o $dir
 .\tools\nuget\NuGet.exe pack .\src\scaffold\nscaffold.scaffold.nuspec -NoPackageAnalysis -o $dir
+.\tools\nuget\NuGet.exe pack .\src\nudeploy\nscaffold.nudeploy.nuspec -NoPackageAnalysis -o $dir
 
 
 if(test-path $env:ChocolateyInstall\bin\NScaffold.bat){
