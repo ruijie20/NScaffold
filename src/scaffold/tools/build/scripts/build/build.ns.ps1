@@ -69,8 +69,12 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     &nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
 }
 
-Task UT-Local {
-    throw "comming soon. "
+Task UT {
+    $version = &$versionManager.retrive
+    $codebaseConfig.projectDirs | Get-ChildItem -include *.ut.nuspec -Recurse | % {
+        $packageId = Get-PackageId $_
+        &nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
+    }
 }
 
 Task Help {

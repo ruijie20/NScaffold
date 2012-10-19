@@ -47,6 +47,14 @@ PS-Get "yam" "0.0.2" -postInstall {
     . "$pkgDir\install.ps1" $codeBaseRoot
 }
 
+. "$codeBaseRoot\codebaseConfig.ps1"
+# extra ps-gets
+if($codebaseConfig.extraPSGets) {
+    $codebaseConfig.extraPSGets | % {
+        PS-Get $_.packageId $_.version
+    }    
+}
+
 Import-Module WebAdministration -Force
 
 $buildParmeters = @{ 
