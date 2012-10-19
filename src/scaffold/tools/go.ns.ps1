@@ -2,13 +2,14 @@
 # use go.ext.ps1 to extend
 param(
     $target, 
-    $packageId="",
+    [string[]] $packageId=@(),
     $env="dev"
 )
 
 trap{
     write-host "Error found: $_" -f red
-    exit 1
+    Remove-Module psake -ea 'SilentlyContinue'
+    Exit 1
 }
 
 $error.clear()
@@ -69,6 +70,7 @@ $buildParmeters = @{
 
 . Register-Extension $MyInvocation.MyCommand.Path
 
+
 Invoke-Psake $scriptRoot\build\build.ns.ps1 $target -Framework "4.0x64" -parameters $buildParmeters
 
 if(!$psake.build_success) {
@@ -76,3 +78,5 @@ if(!$psake.build_success) {
     $buildParmeters | format-table | Out-String | write-host -f yellow
     throw "Failed to execute Task $target."
 }
+Remove-Module psake -ea 'SilentlyContinue'
+Exit 0

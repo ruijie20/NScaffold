@@ -37,7 +37,7 @@ Task Clean -description "clear all bin and obj under project directories (with e
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
     $projects = Get-DeployProjects $codebaseConfig.projectDirs | % { $_.FullName }
     Set-Location $codebaseRoot
-    &$yam build $projects
+    exec {&$yam build $projects}
     Pop-Location
 }
 
@@ -48,7 +48,7 @@ Task Package -description "Compile, package and push to nuget server if there's 
         $codebaseConfig.projectDirs | 
             % { Get-ChildItem $_ -Recurse -Include '*.nuspec' } | 
             % {
-                &$nuget pack $_.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis
+                exec {&$nuget pack $_.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
             }
     }
 
@@ -56,7 +56,7 @@ Task Package -description "Compile, package and push to nuget server if there's 
 
     if($packageConfig.pushRepo){
         Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
-            &$nuget push $_.name -s $packageConfig.pushRepo $packageConfig.apiKey
+            exec {&$nuget push $_.name -s $packageConfig.pushRepo $packageConfig.apiKey}
         }
     }
 }
@@ -64,16 +64,18 @@ Task Package -description "Compile, package and push to nuget server if there's 
 Task Deploy -description "Download from nuget server, deploy and install by running 'install.ps1' in the package"{
     if(-not $packageId){
         throw "packageId must be specified. "
-    }    
+    }
     $version = &$versionManager.retrive
-    &nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
+    $packageId | % {
+        exec {&nudeploy $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force}
+    }    
 }
 
 Task UT {
     $version = &$versionManager.retrive
     $codebaseConfig.projectDirs | Get-ChildItem -include *.ut.nuspec -Recurse | % {
         $packageId = Get-PackageId $_
-        &nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
+        exec {&nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force}
     }
 }
 

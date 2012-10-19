@@ -3,7 +3,7 @@ Get-ChildItem "$PSScriptRoot\libs" -Filter *.ps1 -Recurse |
         . $_.FullName
     }
 
-Function Deploy-NuPackage(){
+Function Install-NuDeployPackage(){
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string] $packageId, 
@@ -30,6 +30,6 @@ Function Deploy-NuPackage(){
     }
 }
 
-Set-Alias nudeploy Deploy-NuPackage
-Export-ModuleMember Deploy-NuPackage
+Set-Alias nudeploy Install-NuDeployPackage
+Export-ModuleMember Install-NuDeployPackage
 Export-ModuleMember -Alias nudeploy
