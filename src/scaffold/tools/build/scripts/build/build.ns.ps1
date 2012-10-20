@@ -71,14 +71,6 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     }    
 }
 
-Task UT {
-    $version = &$versionManager.retrive
-    $codebaseConfig.projectDirs | Get-ChildItem -include *.ut.nuspec -Recurse | % {
-        $packageId = Get-PackageId $_
-        exec {&nudeploy $packageId -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force}
-    }
-}
-
 Task Help {
     Write-Documentation
 }
