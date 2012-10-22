@@ -41,7 +41,7 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
     Pop-Location
 }
 
-Task Package -description "Compile, package and push to nuget server if there's one"{
+Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
     Clear-Directory $packageOutputDir
     $version = &$versionManager.generate
     Use-Directory $packageOutputDir {
