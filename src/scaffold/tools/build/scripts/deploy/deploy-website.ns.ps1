@@ -79,7 +79,7 @@ $installAction = {
 
     if($sourcePath -ne $physicalPath){
         Clear-Directory $physicalPath
-        Copy-Item $sourcePath -destination $physicalPath -recurse
+        Copy-Item "$sourcePath\*" -Destination $physicalPath -Recurse
     }    
     Set-ItemProperty $webSitePath physicalPath $physicalPath
     Start-Website $webSiteName
