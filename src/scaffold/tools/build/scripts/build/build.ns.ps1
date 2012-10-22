@@ -56,7 +56,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
 
     if($packageConfig.pushRepo){
         Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
-            exec {&$nuget push $_.name -s $packageConfig.pushRepo $packageConfig.apiKey}
+            exec {&$nuget push $_.FullName -s $packageConfig.pushRepo $packageConfig.apiKey}
         }
     }
 }
