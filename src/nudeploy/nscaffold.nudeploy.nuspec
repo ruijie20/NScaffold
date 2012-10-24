@@ -20,7 +20,7 @@
     <releaseNotes></releaseNotes>
   </metadata>
   <files>
-    <file src="tools\**" target="tools\" />    
+    <file src="tools\**" target="tools\" />
     <file src="..\..\src-libs\functions\Use-Directory.ns.ps1" target="tools\libs\Use-Directory.ps1" />
     <file src="..\..\src-libs\functions\Install-NuPackage.ns.ps1" target="tools\libs\Install-NuPackage.ps1" />
     <file src="..\..\tools\nuget\**" target="tools\tools\nuget\" />
