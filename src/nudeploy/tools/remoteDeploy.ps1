@@ -1,33 +1,42 @@
 param(
+	[Parameter(Mandatory=$true,  Position = 1)]
 	[string]
-	$env="local",
-	[Parameter(Mandatory=$true)]
+	$env,
+	[Parameter(Mandatory=$true, Position = 2, ParameterSetName = "deploy")]
 	[string]
 	$nugetRepo, 
+	[Parameter(Mandatory=$true, Position = 2, ParameterSetName = "scaffold")]
+	[switch]
+	$scaffold,
 	$versionSpec,
 	$configRootPath = "$(Get-Location)\config", 
 	$nodeDeployRoot = "C:\deployment"
-)
 
+)
 trap{
-	write-host "Error found: $_" -f red
+	$_ | Out-String | Write-Host -f red
 	exit 1
 }
 
 $rootPath = $MyInvocation.MyCommand.Path | Split-Path -parent
-
-<#
-config
-	$env
-		env.config.ps1
-		app-configs
-			package1-config.ini
-			package2-config.ini
-#>
+Get-ChildItem "$rootPath\functions" -Filter *.ps1 -Recurse | 
+    ? { -not ($_.Name.Contains(".Tests.")) } | % {
+        . $_.FullName
+    }
 
 $envPath = "$configRootPath\$env"
 
-Write-Host "Using environment definition at [$envPath] for env[$env]...`n" -f cyan
+if($PsCmdlet.ParameterSetName -eq 'scaffold' -and $scaffold) {
+	New-EnvironmentConfig $envPath	
+	Exit 0
+}
+
+
+if (-not (Test-Path "$envPath\env.config.ps1")) {
+    throw "Please make sure 'env.config.ps1' exists under $envPath"
+}
+
+Write-Host "Using environment definition at [$envPath] for env[$env]..." -f cyan
 . "$envPath\env.config.ps1"
 
 if (-not $appEnvConfigs) {
@@ -35,60 +44,19 @@ if (-not $appEnvConfigs) {
 }
 $appEnvConfigs | Out-String | Write-Debug
 
-$appConfigRootPath = "$envPath\app-configs"
-
 if($versionSpec -and (Test-Path $versionSpec)) {
 	$versionConfig = Import-Config $versionSpec
 	Write-Host "Version spec is found:"	
 	$versionConfig.GetEnumerator() | Sort-Object -Property Name | Out-Host
 }
 
-Function Run-RemoteDeploy {
-	$targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
-	Prepare-PSRemoting $targetNodes
-	$targetNodes | % { Pre-Deploy $_ }
-	$appEnvConfigs | % {	
-	   	Deploy-App $_ $versionConfig
-	}
-}
+# check whether nudeploy is in repo
+$nudeployPackageId = 'NScaffold.NuDeploy'
+$nuget = "$rootPath\tools\nuget\nuget.exe"
+$isNudeployInRepo = [boolean](& $nuget list $nudeployPackageId -source $nugetRepo | ? { 
+	$_ -match "^$nudeployPackageId (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })
 
-Function Prepare-PSRemoting($trustedHosts) {
-	winrm set winrm/config/client "@{TrustedHosts=`"$($trustedHosts -join ",")`"}" | Out-Null
-}
-
-Function Run-RemoteCommand($server, $command) {
-	if($server -eq "localhost") {
-		Save-Location {
-			Invoke-Command -scriptblock {param($command) iex $command} -ArgumentList $command
-		}
-	}
-	else {
-		Invoke-Command -ComputerName $server -scriptblock {
-			param($command) 
-			iex $command
-		} -ArgumentList $command
-	}
-}
-
-Function Run-RemoteScript($server, [ScriptBlock]$scriptblock, $argumentList) {
-	if($server -eq "localhost") {
-		Save-Location {
-			Invoke-Command -scriptblock $scriptblock -ArgumentList $argumentList
-		}
-	}
-	else {
-		Invoke-Command -ComputerName $server -scriptblock $scriptblock -ArgumentList $argumentList
-	}
-}
-
-Function Run-CopyFileRemote($server, $sourceFile, $destFile) {
-	[byte[]]$content = Get-Content $sourceFile -Encoding byte
-	invoke-command -computername $server -scriptblock {
-		param($path, $content) Set-Content $path $content -Encoding byte
-	} -ArgumentList $destFile, $content
-}
-
-Function Pre-Deploy($server){
+Function Prepare-Node($server){
 	Write-Host "Preparing to deploy on node [$server]...." -f cyan
 
 	Run-RemoteScript $server {
@@ -98,20 +66,30 @@ Function Pre-Deploy($server){
 		New-Item $nodeDeployRoot\tools -type directory -ErrorAction silentlycontinue
 	} -argumentList $nodeDeployRoot | out-null
 
-	$nupkg = (Get-Item "$rootPath\..\*.nupkg").FullName
-	Run-CopyFileRemote $server $nupkg "$nodeDeployRoot\tools\$nupkg" | out-null
-	Run-CopyFileRemote $server "$rootPath\tools\nuget\nuget.exe" "$nodeDeployRoot\tools\nuget.exe" | out-null
+	Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
+
+	$nuDeploySource = Prepre-NudeploySource
 
 	Run-RemoteScript $server {
-		param($nodeDeployRoot)
+		param($nodeDeployRoot, $nudeployPackageId, $nuDeploySource)
 		Push-Location
 		Set-Location "$nodeDeployRoot\tools"
-		& "nuget.exe" install "NScaffold.NuDeploy" -source "$nodeDeployRoot\tools\"
+		& "nuget.exe" install $nudeployPackageId -source $nuDeploySource
 	    $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
     	Import-Module $nudeployModule.FullName -Force
 		Pop-Location
-	} -argumentList $nodeDeployRoot | out-null
+	} -argumentList $nodeDeployRoot, $nudeployPackageId, $nuDeploySource | out-null
 	Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
+}
+
+Function Prepre-NudeploySource {
+	if(-not $isNudeployInRepo){
+		$nupkg = Get-Item "$rootPath\..\*.nupkg"
+		Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\tools\$($nupkg.Name)" | out-null
+		"$nodeDeployRoot\tools\"
+	} else {
+		$nugetRepo	
+	}
 }
 
 Function Deploy-App ($envConfig, $versionConfig) {
@@ -121,7 +99,7 @@ Function Deploy-App ($envConfig, $versionConfig) {
 	$appConfig = $envConfig.config
 
 	if($envConfig.features) {
-		$features 	= $envConfig.features	
+		$features = $envConfig.features	
 	} else {
 		$features = @()
 	}
@@ -135,13 +113,18 @@ Function Deploy-App ($envConfig, $versionConfig) {
 		Write-Host "Deploying package [$package] with version [LATEST] to node [$server]...." -f cyan
 	}
 
+	$appConfigRootPath = "$envPath\app-configs"
 	if($appConfig){
 		$configFileName = $appConfig
 	} else {
 		$configFileName = $package
 	}
 
-	Run-CopyFileRemote $server "$appConfigRootPath\$configFileName.ini" "$nodeDeployRoot\$configFileName.ini" | out-null
+	$configFullPath = "$appConfigRootPath\$configFileName.ini"
+	if (-not (Test-Path $configFullPath)) {
+	    throw "Config file [$configFullPath] does not exist. "
+	}
+	Copy-FileRemote $server "$configFullPath" "$nodeDeployRoot\$configFileName.ini" | out-null
 
 	Run-RemoteScript $server {
 		param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
@@ -152,5 +135,7 @@ Function Deploy-App ($envConfig, $versionConfig) {
 	Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
 }
 
-Run-RemoteDeploy
-
+$targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
+& winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
+$targetNodes | % { Prepare-Node $_ }
+$appEnvConfigs | % { Deploy-App $_ $versionConfig }

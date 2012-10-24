@@ -6,7 +6,7 @@ $versionManager = @{
     "generate" = {"1.0.0.$buildNumber"}
     "store" = {
         param($version)
-        Set-Content $version "$packageOutputDir\version.txt" 
+        Set-Content "$packageOutputDir\version.txt" $version
     }
     "retrive" = {
         Get-Content "http://10.18.8.119:8080/job/$jenkinsJobName/$jenkinsJobNo/artifact/tmp/nupkgs/version.txt" 
