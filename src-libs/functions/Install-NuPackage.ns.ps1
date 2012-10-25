@@ -2,11 +2,11 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     Write-Host "Downloading package [$package] from [$nugetSource] to [$workingDir]...." -f cyan
     
     if ($version) {
-        $versionSection = "-v $version"
+        $versionSection = "-version $version"
     }
 
     if($nugetSource){
-        $sourceSection = "-s $nugetSource"
+        $sourceSection = "-source $nugetSource"
     }
 
     # need $nuget to be set, if not set, will search $root directory    

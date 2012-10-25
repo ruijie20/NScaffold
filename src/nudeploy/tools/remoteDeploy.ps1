@@ -22,6 +22,12 @@ trap{
 }
 
 $rootPath = $MyInvocation.MyCommand.Path | Split-Path -parent
+
+Get-ChildItem "$rootPath\libs" -Filter *.ps1 -Recurse | 
+    ? { -not ($_.Name.Contains(".Tests.")) } | % {
+        . $_.FullName
+    }
+    
 Get-ChildItem "$rootPath\functions" -Filter *.ps1 -Recurse | 
     ? { -not ($_.Name.Contains(".Tests.")) } | % {
         . $_.FullName
