@@ -78,9 +78,7 @@ Function Prepare-Node($server){
 		param($nodeDeployRoot, $nudeployPackageId, $nuDeploySource)
 		Push-Location
 		Set-Location "$nodeDeployRoot\tools"
-		& "nuget.exe" install $nudeployPackageId -source $nuDeploySource
-	    $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
-    	Import-Module $nudeployModule.FullName -Force
+		& ".\nuget.exe" install $nudeployPackageId -source $nuDeploySource
 		Pop-Location
 	} -argumentList $nodeDeployRoot, $nudeployPackageId, $nuDeploySource | out-null
 	Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
@@ -133,6 +131,8 @@ Function Deploy-App ($envConfig, $versionConfig) {
 	Run-RemoteScript $server {
 		param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
 		$destAppPath = "$nodeDeployRoot\$package" 
+	    $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
+    	Import-Module $nudeployModule.FullName -Force
 		& "nudeploy" -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features		
 	} -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, "$nodeDeployRoot\$configFileName.ini", $features
 
