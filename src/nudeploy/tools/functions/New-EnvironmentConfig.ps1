@@ -24,6 +24,7 @@ throw 'Remove this line after properly configured. '
         New-Item "$envPath\app-configs\foo.ini" -Type File | Out-Null
         New-Item "$envPath\app-configs\bar.ini" -Type File | Out-Null
         Write-Host "The scaffold of environment $env has already been set up. Please config it properly. " -f cyan      
+    } else {
+        Write-Host "Already exists. " -f cyan    
     }
-    Write-Host "Already exists. " -f cyan
 }

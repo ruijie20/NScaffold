@@ -41,6 +41,9 @@ Function New-LocalUser
   [string]$computerName = $env:ComputerName, 
   [string]$description = "Created by PowerShell" 
  ) 
+ if($userName.Length -gt 20){
+  throw "The max length of username cannot exceeds 20 characters. "
+ }
  $computer = [ADSI]"WinNT://$computerName" 
  $user = $computer.Create("User", $userName) 
  $user.setpassword($password) 

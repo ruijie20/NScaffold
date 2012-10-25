@@ -13,8 +13,11 @@ param(
 	$nodeDeployRoot = "C:\deployment"
 
 )
+Start-Transcript
 trap{
 	$_ | Out-String | Write-Host -f red
+	$x = Stop-Transcript
+	Write-Host $x -f cyan
 	exit 1
 }
 
@@ -63,7 +66,8 @@ Function Prepare-Node($server){
 		param($nodeDeployRoot)
 		Remove-Item $nodeDeployRoot -r -Force -ErrorAction silentlycontinue
 		New-Item $nodeDeployRoot -type directory -ErrorAction silentlycontinue
-		New-Item $nodeDeployRoot\tools -type directory -ErrorAction silentlycontinue
+		New-Item "$nodeDeployRoot\tools" -type directory -ErrorAction silentlycontinue
+		New-Item "$nodeDeployRoot\nupkgs" -type directory -ErrorAction silentlycontinue
 	} -argumentList $nodeDeployRoot | out-null
 
 	Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
@@ -85,8 +89,8 @@ Function Prepare-Node($server){
 Function Prepre-NudeploySource {
 	if(-not $isNudeployInRepo){
 		$nupkg = Get-Item "$rootPath\..\*.nupkg"
-		Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\tools\$($nupkg.Name)" | out-null
-		"$nodeDeployRoot\tools\"
+		Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\nupkgs\$($nupkg.Name)" | out-null
+		"$nodeDeployRoot\nupkgs\"
 	} else {
 		$nugetRepo	
 	}
@@ -139,3 +143,6 @@ $targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
 & winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
 $targetNodes | % { Prepare-Node $_ }
 $appEnvConfigs | % { Deploy-App $_ $versionConfig }
+$x = Stop-Transcript
+Write-Host $x -f cyan
+Exit 0

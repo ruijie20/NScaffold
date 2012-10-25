@@ -18,13 +18,13 @@ Function Install-NuDeployPackage(){
     if($force -and (Test-Path $outputDir)){
         Remove-Item "$outputDir\*" -Force -Recurse
     }
-
+    $configFullPath = (Resolve-Path $config).ProviderPath
     $nugetSource = $source
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     Install-NuPackage $packageId $workingDir $version | % {
         Use-Directory $_ {
             if(Test-Path ".\install.ps1"){
-                & ".\install.ps1" $config $features
+                & ".\install.ps1" $configFullPath $features
             }
         }
     }
