@@ -13,6 +13,7 @@ param(
 	$nodeDeployRoot = "C:\deployment"
 
 )
+
 Start-Transcript
 trap{
 	$_ | Out-String | Write-Host -f red
