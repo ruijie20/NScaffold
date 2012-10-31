@@ -26,7 +26,7 @@ Function Install-NuDeployPackage(){
     Install-NuPackage $packageId $workingDir $version | % {
         Use-Directory $_ {
             if(Test-Path ".\install.ps1"){
-                & ".\install.ps1" $configFullPath $features
+                & ".\install.ps1" $config $features
             }
         }
     }
