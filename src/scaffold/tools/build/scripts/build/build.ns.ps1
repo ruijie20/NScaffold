@@ -35,7 +35,7 @@ Task Clean -description "clear all bin and obj under project directories (with e
 }
 
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
-    $projects = Get-DeployProjects $codebaseConfig.projectDirs | % { $_.FullName }
+    $projects = Get-DeployProjects $codebaseConfig.projectDirs {$packageId -contains $_.Name.Replace(".nuspec", "") -or $packageId.count -eq 0} | % { $_.FullName }
     Set-Location $codebaseRoot
     exec {&$yam build $projects}
     Pop-Location
@@ -47,6 +47,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     Use-Directory $packageOutputDir {
         $codebaseConfig.projectDirs | 
             % { Get-ChildItem $_ -Recurse -Include '*.nuspec' } | 
+            ? { $packageId -contains $_.Name.Replace(".nuspec", "") -or $packageId.count -eq 0 } |
             % {
                 exec {&$nuget pack $_.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
             }
