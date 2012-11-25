@@ -34,8 +34,10 @@ Task Clean -description "clear all bin and obj under project directories (with e
     }
 }
 
+# only compile the default profile nodes
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
-    $projects = Get-DeployProjects $codebaseConfig.projectDirs {$packageId -contains $_.Name.Replace(".nuspec", "") -or $packageId.count -eq 0} | % { $_.FullName }
+    $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId    
+    $projects = $nodes | ? {-not $_.profile -and $_.project} | % { $_.project.FullName }
     Set-Location $codebaseRoot
     exec {&$yam build $projects}
     Pop-Location
@@ -44,13 +46,32 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
 Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
     Clear-Directory $packageOutputDir
     $version = &$versionManager.generate
+    $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId
+
+    #default profile
     Use-Directory $packageOutputDir {
-        $codebaseConfig.projectDirs | 
-            % { Get-ChildItem $_ -Recurse -Include '*.nuspec' } | 
-            ? { $packageId -contains $_.Name.Replace(".nuspec", "") -or $packageId.count -eq 0 } |
+        $nodes | ? {-not $_.profile} |
             % {
-                exec {&$nuget pack $_.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
+                exec {&$nuget pack $_.spec.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
             }
+    }
+
+    # others
+    $nodes | ? {$_.profile} | group -Property {$_.profile} | % {
+        $profile = $_.Name
+        $currentNodes = $_.Group
+        $compileProjects = $currentNodes | ? {$_.project}
+        $dirs = $compileProjects | % { $_.project.Directory.FullName }
+        $projects = $compileProjects | % { $_.project.FullName }
+        Clean-Projects $dirs
+        Set-Location $codebaseRoot        
+        exec {&$yam build $projects -runtimeProfile $profile}
+        Pop-Location
+        Use-Directory $packageOutputDir {
+            $currentNodes | % {
+                exec {&$nuget pack $_.spec.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
+            }
+        }
     }
 
     &$versionManager.store $version
@@ -61,6 +82,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         }
     }
 }
+
 
 Task Deploy -description "Download from nuget server, deploy and install by running 'install.ps1' in the package"{
     if(-not $packageId){

@@ -1,4 +1,3 @@
-
 Function Clean-Projects ($projectDirs) {
     $projectDirs | 
         ? { Test-Path $_ } | 
