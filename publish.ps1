@@ -1,7 +1,7 @@
 $packageJobName = $Env:PACKAGE_JOB_NAME
 $packageJobNumber = $Env:PACKAGE_JOB_NUMBER
 
-$versionUrl = "http://10.18.8.119:8080/job/$packageJobName/$packageJobNumber/artifact/tmp/nupkgs/version.txt" 
+$versionUrl = "http://10.18.8.119:8080/job/$packageJobName/$packageJobNumber/artifact/tmp/pkgs/version.txt" 
 
 $request = [System.Net.HttpWebRequest]::Create($versionUrl)
 $request.Headers.Add([System.Net.HttpRequestHeader]::AcceptEncoding, "gzip,deflate")
