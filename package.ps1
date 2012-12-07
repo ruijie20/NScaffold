@@ -1,4 +1,10 @@
+trap {
+    write-host "Error found: $_" -f red
+    exit 1
+}
+
 $dir = Join-Path $(Split-Path -parent $MyInvocation.MyCommand.Definition) "tmp\pkgs\"
+
 if(test-path .\tmp\pkgs\){
 	remove-item .\tmp\pkgs\*.*
 } else {

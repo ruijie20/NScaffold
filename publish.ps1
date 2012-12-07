@@ -1,3 +1,8 @@
+trap {
+    write-host "Error found: $_" -f red
+    exit 1
+}
+
 $packageJobName = $Env:PACKAGE_JOB_NAME
 $packageJobNumber = $Env:PACKAGE_JOB_NUMBER
 

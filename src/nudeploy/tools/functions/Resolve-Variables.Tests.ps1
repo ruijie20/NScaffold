@@ -12,11 +12,9 @@ Describe "Resolve-Varialbes" {
             "port" = "1234"
         }
         $appliedVarabiles = Resolve-Variables $variables
-        $appliedVarabiles.should.equal(@{
-            "apphost" = "hostname:port"
-            "hostname" = "localhost"
-            "port" = "1234"
-        })
+        $appliedVarabiles.apphost.should.be("hostname:port")
+        $appliedVarabiles.hostname.should.be("localhost")
+        $appliedVarabiles.port.should.be("1234")
     }
 
     It "return resolve variables to their values" {
@@ -29,14 +27,12 @@ Describe "Resolve-Varialbes" {
             "baseUri" = "[protocol][apphost]/baseUri"
         }
         $appliedVarabiles = Resolve-Variables $variables
-        $appliedVarabiles.should.equal(@{
-            "protocol" = "http://"
-            "hostname" = "localhost"
-            "port" = "1234"
-            "apphost" = "localhost:1234"
-            "baseUri" = "http://localhost:1234/baseUri"
-        })
 
+        $appliedVarabiles.protocol.should.be("http://")
+        $appliedVarabiles.hostname.should.be("localhost")
+        $appliedVarabiles.port.should.be("1234")
+        $appliedVarabiles.apphost.should.be("localhost:1234")
+        $appliedVarabiles.baseUri.should.be("http://localhost:1234/baseUri")
     }
 
 
@@ -53,7 +49,7 @@ Describe "Resolve-Varialbes" {
         } catch {
             $exceptionThrown = $true
         }
-        $exceptionThrown.should.Be($true)
+        $exceptionThrown.should.be($true)
     }
 
 }
