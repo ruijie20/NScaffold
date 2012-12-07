@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>Test.Package</id>
+    <version>1.0</version>
+    <title>Test.Package</title>
+    <authors>ThoughtWorks Corp</authors>
+    <owners>PwC</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Test.Package</description>
+    <copyright>Copyright 2012</copyright>
+  </metadata>
+  <files>
+    <file src="install.ps1" target="" />    
+    <file src="config.ini" target="" />    
+  </files>
+</package>

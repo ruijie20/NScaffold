@@ -1,16 +1,17 @@
 Function Merge-Hashtable($target, $source) {
-    $result = @{}
+  $result = @{}
 
-    $target.GetEnumerator() | % {
-        if($_.value -ne $null) {
-            $result[$_.key] = $_.value
-        }
-    }
+  $target.GetEnumerator() | % {
+      if($_.value -ne $null) {
+          $result[$_.key] = $_.value
+      }
+   }
     
 	$source.GetEnumerator() | % {
 		if($_.value -ne $null) {
   			$result[$_.key] = $_.value
   		}
 	}
-	return $result
+
+	$result
 }

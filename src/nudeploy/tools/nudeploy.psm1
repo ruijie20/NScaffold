@@ -10,5 +10,5 @@ Get-ChildItem "$PSScriptRoot\functions" -Filter *.ps1 -Recurse |
 
 Set-Alias nudeploy Install-NuDeployPackage
 Set-Alias nudeployEnv Install-NuDeployEnv
-Export-ModuleMember -Alias nudeploy
-Export-ModuleMember -Alias nudeployEnv
+Export-ModuleMember -Function Install-NuDeployPackage -Alias nudeploy
+Export-ModuleMember -Function Install-NuDeployEnv -Alias nudeployEnv

@@ -1,5 +1,4 @@
-$testDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$rootDir = "$testDir\.."
+$rootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 . "$rootDir\src-libs\functions\Install-NuPackage.ns.ps1"
 . "$rootDir\src-libs\functions\Use-Directory.ns.ps1"

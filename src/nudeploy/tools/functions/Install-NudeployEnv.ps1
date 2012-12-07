@@ -1,62 +1,71 @@
 Function Install-NuDeployEnv{
-	param(
-    [Parameter(Mandatory=$true,  Position = 1)]
-    [string]
-    $envPath,
-    $versionSpec,
-    $nugetRepoSource
-)
+    param(
+       [Parameter(Mandatory=$true, Position=0)][string] $envPath,
+       [string] $versionSpec,
+       [string] $nugetRepoSource
+    )
 
-Start-Transcript
-trap{
-    $_ | Out-String | Write-Host -f red
-    $x = Stop-Transcript
-    Write-Host $x -f cyan
-    exit 1
+    $envGlobalConfig = Get-DesiredEnvConfig $envPath
+    $nodeDeployRoot = Get-DesiredNodeDeploymentRoot $envGlobalConfig
+    $nugetRepo = Get-DesiredNugetRepo $envGlobalConfig $nugetRepoSource
+    $appEnvConfigs = Get-DesiredAppConfigs $envGlobalConfig
+    $versionConfig = Import-VersionSpec $versionSpec
+
+    $targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
+    Add-HostAsTrusted $targetNodes
+    $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot}
+    $appEnvConfigs | % { Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envPath }
 }
 
-$rootPath = $MyInvocation.MyCommand.Path | Split-Path -parent
-
-if (-not (Test-Path "$envPath\env.config.ps1")) {
-    throw "Please make sure 'env.config.ps1' exists under $envPath"
-}
-
-Write-Host "Using environment definition at [$envPath]..." -f cyan
-$envGlobalConfig = & "$envPath\env.config.ps1"
-
-$appEnvConfigs = $envGlobalConfig.apps
-$nugetRepo = $envGlobalConfig.nugetRepo
-$nodeDeployRoot = $envGlobalConfig.nodeDeployRoot
-if (-not $nodeDeployRoot) {
-    $nodeDeployRoot = "C:\deployment"
-}
-
-if (-not $appEnvConfigs) {
-    throw "appEnvConfigs is not configed properly. "
-}
-
-if (-not $nugetRepo) {
-    $nugetRepo = $nugetRepoSource
-    if (-not $nugetRepo) {
-        throw "nugetRepo is not configed properly. "    
+Function Get-DesiredEnvConfig($envPath) {
+    if (-not (Test-Path "$envPath\env.config.ps1")) {
+        throw "Please make sure 'env.config.ps1' exists under $envPath"
     }
+    Write-Host "Using environment definition at [$envPath]..." -f cyan
+    & "$envPath\env.config.ps1"
 }
 
-$appEnvConfigs | Out-String | Write-Debug
-
-if($versionSpec -and (Test-Path $versionSpec)) {
-    $versionConfig = Import-Config $versionSpec
-    Write-Host "Version spec is found:" 
-    $versionConfig.GetEnumerator() | Sort-Object -Property Name | Out-Host
+Function Get-DesiredNodeDeploymentRoot($envGlobalConfig) {
+    $nodeDeployRoot = $envGlobalConfig.nodeDeployRoot
+    if (-not $nodeDeployRoot) {
+        $nodeDeployRoot = "C:\deployment"
+    }
+    $nodeDeployRoot
 }
 
-# check whether nudeploy is in repo
-$nudeployPackageId = 'NScaffold.NuDeploy'
-$nuget = "$rootPath\tools\nuget\nuget.exe"
-$isNudeployInRepo = [boolean](& $nuget list $nudeployPackageId -source $nugetRepo | ? { 
-    $_ -match "^$nudeployPackageId (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })
+Function Get-DesiredNugetRepo($envGlobalConfig, $nugetRepoSource) {
+    $nugetRepo = $envGlobalConfig.nugetRepo
+    if (-not $nugetRepo) {
+        $nugetRepo = $nugetRepoSource
+        if (-not $nugetRepo) {
+            throw "nugetRepo is not configured properly. "    
+        }
+    }    
+    $nugetRepo
+}
 
-Function Prepare-Node($server){
+Function Get-DesiredAppConfigs($envGlobalConfig) {
+    $appEnvConfigs = $envGlobalConfig.apps
+    if (-not $appEnvConfigs) {
+        throw "appEnvConfigs is not configured properly. "
+    }    
+    $appEnvConfigs
+}
+
+Function Import-VersionSpec($versionSpec) {
+    if($versionSpec -and (Test-Path $versionSpec)) {
+        $versionConfig = Import-Config $versionSpec
+        Write-Host "Version spec is found:" 
+        $versionConfig.GetEnumerator() | Sort-Object -Property Name | Out-Host
+    }
+    $versionConfig
+}
+
+Function Add-HostAsTrusted($targetNodes) {
+    winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
+}
+
+Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot){
     Write-Host "Preparing to deploy on node [$server]...." -f cyan
 
     Run-RemoteScript $server {
@@ -67,23 +76,30 @@ Function Prepare-Node($server){
         New-Item "$nodeDeployRoot\nupkgs" -type directory -ErrorAction silentlycontinue
     } -argumentList $nodeDeployRoot | out-null
 
+    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
 
-    $nuDeploySource = Prepre-NudeploySource
+    $nuDeployPackageId = 'NScaffold.NuDeploy'
+    $nuDeploySource = Prepre-NudeploySource $nugetRepo
 
     Run-RemoteScript $server {
-        param($nodeDeployRoot, $nudeployPackageId, $nuDeploySource)
+        param($nodeDeployRoot, $nuDeployPackageId, $nuDeploySource)
         Push-Location
         Set-Location "$nodeDeployRoot\tools"
-        & ".\nuget.exe" install $nudeployPackageId -source $nuDeploySource
+        & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource
         Pop-Location
-    } -argumentList $nodeDeployRoot, $nudeployPackageId, $nuDeploySource | out-null
+    } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-null
     Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
 }
 
-Function Prepre-NudeploySource {
+Function Prepre-NudeploySource($nugetRepo) {
+    $nuDeployPackageId = 'NScaffold.NuDeploy'
+    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+    $isNudeployInRepo = [boolean](& $nuget list $nuDeployPackageId -source $nugetRepo | ? { 
+        $_ -match "^$nuDeployPackageId (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })
+
     if(-not $isNudeployInRepo){
-        $nupkg = Get-Item "$rootPath\..\*.nupkg"
+        $nupkg = Get-Item "$PSScriptRoot\..\*.nupkg"
         Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\nupkgs\$($nupkg.Name)" | out-null
         "$nodeDeployRoot\nupkgs\"
     } else {
@@ -91,18 +107,32 @@ Function Prepre-NudeploySource {
     }
 }
 
-Function Deploy-App ($envConfig, $versionConfig) {
-    $package    = $envConfig.package
-    $server     = $envConfig.server
-    $version    = $envConfig.version
-    $appConfig = $envConfig.config
+Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $envPath) {
+    $server = $envConfig.server
+    $package = $envConfig.package
+    $version = Get-DesiredPackageVersion $package $envConfig $versionConfig
+    $features = Get-DesiredPackageFeatures $envConfig
+    $configFileName = Get-DesiredPackageConfigFileName $envConfig
 
-    if($envConfig.features) {
-        $features = $envConfig.features 
-    } else {
-        $features = @()
-    }
-    
+    $packageConfig = Import-PackageConfig $envPath $configFileName
+    $finalPackageConfigFile = "$envPath\applied-app-configs\$configFileName.ini"
+    Build-FinalPackageConfigFile $packageConfig $envGlobalConfig.variables $finalPackageConfigFile
+    $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
+    Copy-FileRemote $server $finalPackageConfigFile $remoteConfigFile | out-null
+
+    Run-RemoteScript $server {
+        param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
+        $destAppPath = "$nodeDeployRoot\$package" 
+        $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
+        Import-Module $nudeployModule.FullName -Force
+        nudeploy -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
+    } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features
+
+    Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
+}
+
+Function Get-DesiredPackageVersion($package, $envConfig, $versionConfig) {
+    $version = $envConfig.version
     if ((-not $version) -and $versionConfig -and ($versionConfig[$package])){
         $version = $versionConfig[$package]
     }
@@ -111,39 +141,36 @@ Function Deploy-App ($envConfig, $versionConfig) {
     }else{
         Write-Host "Deploying package [$package] with version [LATEST] to node [$server]...." -f cyan
     }
+    $version
+}
 
-    $appConfigRootPath = "$envPath\app-configs"
-    if($appConfig){
-        $configFileName = $appConfig
-    } else {
-        $configFileName = $package
+Function Get-DesiredPackageFeatures($envConfig) {
+    $features = $envConfig.features 
+    if(-not $features) {
+        $features = @()
     }
+    $features
+}
 
-    $configFullPath = "$appConfigRootPath\$configFileName.ini"
+Function Get-DesiredPackageConfigFileName($envConfig) {
+    $configFileName = $envConfig.config
+    if(-not $configFileName){
+        $configFileName = $envConfig.package
+    }
+    $configFileName
+}
+
+Function Import-PackageConfig($envPath, $configFileName) {
+    $configFullPath = "$envPath\app-configs\$configFileName.ini"
     if (-not (Test-Path $configFullPath)) {
         throw "Config file [$configFullPath] does not exist. "
     }
-
-    $variableAppliedConfig = Apply-Variables $envGlobalConfig.variables $configFullPath
-    Copy-FileRemote $server "$variableAppliedConfig" "$nodeDeployRoot\$configFileName.ini" | out-null
-
-    Run-RemoteScript $server {
-        param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
-        $destAppPath = "$nodeDeployRoot\$package" 
-        $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
-        Import-Module $nudeployModule.FullName -Force
-        & "nudeploy" -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
-    } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, "$nodeDeployRoot\$configFileName.ini", $features
-
-    Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
+    Import-Config $configFullPath    
 }
 
-$targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
-& winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
-$targetNodes | % { Prepare-Node $_ }
-$appEnvConfigs | % { Deploy-App $_ $versionConfig }
-$x = Stop-Transcript
-Write-Host $x -f cyan
-Exit 0
-
+Function Build-FinalPackageConfigFile($packageConfig, $envVariables, $fileName) {
+    $packageConfig = Merge-HashTable $packageConfig $envVariables
+    $packageConfig = Resolve-Variables $packageConfig
+    New-Item -Type File $fileName -Force
+    $packageConfig.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $fileName
 }
