@@ -15,4 +15,7 @@ $pester = (Get-ChildItem "$pesterDir" pester.psm1 -recurse).FullName
 
 Use-Directory  "$rootDir\src" { 
     & Powershell -noprofile -NonInteractive -command "Import-Module $pester; Invoke-Pester -EnableExit"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Job run powershell test failed."
+    }
 } 
