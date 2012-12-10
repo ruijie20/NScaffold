@@ -20,4 +20,4 @@ $version = $nupackagePath.FullName |  % { $regex.Matches($_) } | % { $_.Groups[1
 
 Set-Content "$dir\version.txt" $version
 
-Copy-Item "$dir\NScaffold.NuDeploy.$version.nupkg" "\\10.18.1.28\nuget-packages\"
+Copy-Item "$dir\NScaffold.NuDeploy.$version.nupkg" "\\10.18.7.148\nuget-temp-packages"
