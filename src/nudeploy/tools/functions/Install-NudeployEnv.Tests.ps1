@@ -1,8 +1,8 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = "$here\..\..\..\.."
 $nugetExe = "$root\tools\nuget\NuGet.exe"
-$fixturesTemplate = "$root\test\config-fixtures\Install-NudeployEnv-fixtures"
-$fixtures = "$TestDrive\Install-NudeployEnv-fixtures"
+$fixturesTemplate = "$root\test\config-fixtures"
+$fixtures = "$TestDrive\config-fixtures"
 $nugetRepo = "$fixtures\nugetRepo"
 $workingDir = "$fixtures\workingDir"
 $nuDeployPackageName = "NScaffold.NuDeploy"

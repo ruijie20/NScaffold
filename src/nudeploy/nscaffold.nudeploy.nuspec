@@ -3,7 +3,7 @@
   <metadata>
     <id>NScaffold.NuDeploy</id>
     <title>NScaffold.NuDeploy</title>
-    <version>0.0.9</version>
+    <version>0.0.10</version>
     <authors>xiaoyvr</authors>
     <owners>xiaoyvr</owners>
     <summary>NScaffold.NuDeploy</summary>
@@ -25,6 +25,7 @@
     <file src="..\..\src-libs\functions\Install-NuPackage.ns.ps1" target="tools\libs\Install-NuPackage.ps1" />
     <file src="..\..\src-libs\functions\Import-Config.ns.ps1" target="tools\libs\Import-Config.ps1" />
     <file src="..\..\src-libs\functions\Merge-HashTable.ns.ps1" target="tools\libs\Merge-HashTable.ps1" />
+    <file src="..\..\src-libs\functions\Redo-OnError.ns.ps1" target="tools\libs\Redo-OnError.ps1" />
     <file src="..\..\tools\nuget\**" target="tools\tools\nuget\" />
   </files>
 </package>

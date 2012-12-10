@@ -12,3 +12,4 @@ Set-Alias nudeploy Install-NuDeployPackage
 Set-Alias nudeployEnv Install-NuDeployEnv
 Export-ModuleMember -Function Install-NuDeployPackage -Alias nudeploy
 Export-ModuleMember -Function Install-NuDeployEnv -Alias nudeployEnv
+Export-ModuleMember -Function Install-NuPackage
