@@ -24,8 +24,4 @@ Describe "nudeploy.psm1" {
         (Get-Command Install-NudeployEnv).Name.should.be("Install-NudeployEnv")
         (Get-Command nudeployEnv).Name.should.be("nudeployEnv")
     }
-
-    It "should have command Install-NuPackage" {
-        (Get-Command Install-NuPackage).Name.should.be("Install-NuPackage")
-    }
 }
