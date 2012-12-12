@@ -39,7 +39,7 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     Write-Host "Package [$package] has been downloaded to [$packageDir]." -f cyan
     if(($nuGetInstallOutput -match "Successfully installed") -or ($nuGetInstallOutput -match "already installed")){
         if($postInstall){
-            &$postInstall $packageDir           
+            &$postInstall $packageDir | Out-Null         
         }
     }
     $packageDir

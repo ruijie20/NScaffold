@@ -20,10 +20,10 @@ Describe "Install-NuPackage" {
     It "should install the package with the latest version." {
         $nuget = $nugetExe
         $nugetSource = $nugetRepo
-        Install-NuPackage $packageName $workingDir
+        $packageRoot = Install-NuPackage $packageName $workingDir
         
         $packageVersion = "1.0"
-        $packageRoot = "$workingDir\$packageName.$packageVersion"
+        $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
         $fileInPackage = "$packageRoot\config.ini"
         (Test-Path $fileInPackage).should.be($True)
         $installResultFile = "$packageRoot\deployment.config.ini"
@@ -35,9 +35,9 @@ Describe "Install-NuPackage" {
         $nugetSource = $nugetRepo
         $packageVersion = "0.9"
 
-        Install-NuPackage $packageName $workingDir $packageVersion
+        $packageRoot = Install-NuPackage $packageName $workingDir $packageVersion
         
-        $packageRoot = "$workingDir\$packageName.$packageVersion"
+        $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
         $fileInPackage = "$packageRoot\config.ini"
         (Test-Path $fileInPackage).should.be($True)
         $installResultFile = "$packageRoot\deployment.config.ini"
@@ -49,12 +49,12 @@ Describe "Install-NuPackage" {
         $nugetSource = $nugetRepo
         $packageVersion = "1.0"
 
-        $packageRoot = "$workingDir\$packageName.$packageVersion"
-        $fileCreateByBlock = "$packageRoot\block.ini"
-        Install-NuPackage $packageName $workingDir $packageVersion {
+        $fileCreateByBlock = "$TestDrive\block.ini"
+        $packageRoot = Install-NuPackage $packageName $workingDir $packageVersion {
            New-Item -type file -path $fileCreateByBlock
         }
-        
+
+        $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
         $fileInPackage = "$packageRoot\config.ini"
         (Test-Path $fileInPackage).should.be($True)
         $installResultFile = "$packageRoot\deployment.config.ini"
