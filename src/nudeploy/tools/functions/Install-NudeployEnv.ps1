@@ -125,7 +125,7 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
         $destAppPath = "$nodeDeployRoot\$package" 
         $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
         Import-Module $nudeployModule.FullName -Force
-        nudeploy -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
+        Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
     } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features
 
     Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan

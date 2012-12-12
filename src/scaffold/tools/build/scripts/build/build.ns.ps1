@@ -90,7 +90,7 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     }
     $version = &$versionManager.retrive
     $packageId | % {
-        exec {&nudeploy $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force}
+        exec {&Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force}
     }    
 }
 

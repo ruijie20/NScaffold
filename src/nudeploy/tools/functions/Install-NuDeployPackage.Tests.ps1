@@ -24,7 +24,7 @@ Describe "Install-NuDeployPackage" {
 
     It "should deploy the latest package all spec." {
         $features = @("renew", "load-balancer")
-        nudeploy -packageId $packageName -version 0.9  -source $nugetRepo -workingDir $workingDir -config $configFile -features $features
+        Install-NuDeployPackage -packageId $packageName -version 0.9  -source $nugetRepo -workingDir $workingDir -config $configFile -features $features
 
         $packageVersion = "0.9"
         $packageRoot = "$workingDir\$packageName.$packageVersion"
