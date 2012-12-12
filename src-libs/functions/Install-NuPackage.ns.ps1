@@ -21,10 +21,6 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     $nuGetInstallOutput = Redo-OnError $nuget $argument
     Write-Host "Output: $nuGetInstallOutput" -f cyan
 
-    if($LastExitCode -ne 0){
-        throw "$nuGetInstallOutput"     
-    }
-
     if($version){
         $installedVersion = $version
     } else {
