@@ -169,7 +169,9 @@ Function Import-PackageConfig($envPath, $configFileName) {
 }
 
 Function Build-FinalPackageConfigFile($packageConfig, $envVariables, $fileName) {
-    $packageConfig = Merge-HashTable $packageConfig $envVariables
+    if($envVariables){
+        $packageConfig = Merge-HashTable $packageConfig $envVariables
+    }
     $packageConfig = Resolve-Variables $packageConfig
     New-Item -Type File $fileName -Force
     $packageConfig.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $fileName

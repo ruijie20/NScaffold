@@ -8,7 +8,7 @@ $workingDir = "$fixtures\workingDir"
 $nuDeployPackageName = "NScaffold.NuDeploy"
 . "$root\src-libs\functions\Import-Config.ns.ps1"
 
-Describe "Install-NudeployEnv" {
+Describe "Install-NudeployEnv with no spec param" {
     Copy-Item $fixturesTemplate $fixtures -Recurse
 
     & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -o $nugetRepo
@@ -16,7 +16,8 @@ Describe "Install-NudeployEnv" {
     $nuDeployDir = Get-ChildItem $workingDir | ? {$_.Name -like "$nuDeployPackageName.*"} | Select-Object -First 1
     Import-Module "$($nuDeployDir.FullName)\tools\nudeploy.psm1" -Force
 
-    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -o $nugetRepo
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.0 -o $nugetRepo
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
 
     It "should deploy the package on the host specified in env config with correct package configurations" {
         $envPath = "$fixtures\config"
@@ -43,5 +44,44 @@ Describe "Install-NudeployEnv" {
 		$config.AppName.should.be("ConsentService")
 		$config.ConsentServicePort.should.be("8888")
 		$config.ENV.should.be("int")
-    }   
+    }
+}
+
+
+Describe "Install-NudeployEnv with spec param" {
+    Copy-Item $fixturesTemplate $fixtures -Recurse
+
+    & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -o $nugetRepo
+    & $nugetExe install $nuDeployPackageName -Source $nugetRepo -OutputDirectory $workingDir -NoCache
+    $nuDeployDir = Get-ChildItem $workingDir | ? {$_.Name -like "$nuDeployPackageName.*"} | Select-Object -First 1
+    Import-Module "$($nuDeployDir.FullName)\tools\nudeploy.psm1" -Force
+
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.0 -o $nugetRepo
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
+
+    It "should deploy the package on the host specified in env config with correct package configurations" {
+        $envPath = "$fixtures\config_simple"
+        $versionTempFile = "$fixtures\versionSpec.ini"
+        Install-NudeployEnv -envPath $envPath -versionSpec $versionTempFile -nugetRepoSource $nugetRepo
+        $envConfig = & "$envPath\env.config.ps1"
+        $packageName = "Test.Package"
+        $packageVersion = "0.9"
+        $defaultDeployRoot = "C:\deployment"
+        $packageRoot = "$defaultDeployRoot\$packageName\$packageName.$packageVersion"
+        $packageRoot.should.exist()
+        $deploymentConfigFile = "$packageRoot\deployment.config.ini"
+        $config = Import-Config $deploymentConfigFile
+
+        $config.DataSource.should.be("localhost1")
+        $config.DatabaseName.should.be("MyTaxes-local1")
+        $config.WebsiteName.should.be("ConsentService-local1")
+        $config.WebsitePort.should.be("80791")
+        $config.AppPoolName.should.be("ConsentService-local1")
+        $config.AppPoolUser.should.be("ConsentService-local1")
+        $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
+        $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
+        Remove-Item -r "$defaultDeployRoot\$packageName" -Force
+    }
+
+
 }
