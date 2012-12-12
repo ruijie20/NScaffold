@@ -83,6 +83,6 @@ Function Redo-OnException($RetryCount = 3, $SleepSecond = 0, $RedoActionScriptBl
 
 & $installAction
 
-if(-not Match-WebsiteWithPackage){
+if(-not (Match-WebsiteWithPackage)){
     throw "Site [$webSiteName] doesn't match package [$($packageInfo.packageId)]"
 }
