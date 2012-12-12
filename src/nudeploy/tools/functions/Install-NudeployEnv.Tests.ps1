@@ -21,7 +21,14 @@ Describe "Install-NudeployEnv with no spec param" {
 
     It "should deploy the package on the host specified in env config with correct package configurations" {
         $envPath = "$fixtures\config"
-        Install-NudeployEnv $envPath
+        $result = Install-NudeployEnv $envPath
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package1.0")
+
         $envConfig = & "$envPath\env.config.ps1"
         $packageName = "Test.Package"
         $packageVersion = "1.0"
@@ -62,7 +69,14 @@ Describe "Install-NudeployEnv with spec param" {
     It "should deploy the package on the host specified in env config with correct package configurations" {
         $envPath = "$fixtures\config_simple"
         $versionTempFile = "$fixtures\versionSpec.ini"
-        Install-NudeployEnv -envPath $envPath -versionSpec $versionTempFile -nugetRepoSource $nugetRepo
+        $result = Install-NudeployEnv -envPath $envPath -versionSpec $versionTempFile -nugetRepoSource $nugetRepo
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package0.9")
+
         $envConfig = & "$envPath\env.config.ps1"
         $packageName = "Test.Package"
         $packageVersion = "0.9"
@@ -82,6 +96,27 @@ Describe "Install-NudeployEnv with spec param" {
         $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
         Remove-Item -r "$defaultDeployRoot\$packageName" -Force
     }
+}
 
+Describe "Install-NudeployEnv with multi-package" {
+    Copy-Item $fixturesTemplate $fixtures -Recurse
 
+    & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -o $nugetRepo
+    & $nugetExe install $nuDeployPackageName -Source $nugetRepo -OutputDirectory $workingDir -NoCache
+    $nuDeployDir = Get-ChildItem $workingDir | ? {$_.Name -like "$nuDeployPackageName.*"} | Select-Object -First 1
+    Import-Module "$($nuDeployDir.FullName)\tools\nudeploy.psm1" -Force
+
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 2.0 -o $nugetRepo
+    & $nugetExe pack "$fixtures\package_source_multiple\test_package_multiple.nuspec" -NoPackageAnalysis -Version 2.1 -o $nugetRepo
+
+    It "should deploy the package on the host specified in env config with correct package configurations" {
+        $envPath = "$fixtures\config_multiple"
+        $result = Install-NudeployEnv $envPath
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package2.0Test.Package.Multiple2.1")
+    }
 }

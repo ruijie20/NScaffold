@@ -4,17 +4,23 @@ Function Install-NuDeployEnv{
        [string] $versionSpec,
        [string] $nugetRepoSource
     )
-
     $envGlobalConfig = Get-DesiredEnvConfig $envPath
     $nodeDeployRoot = Get-DesiredNodeDeploymentRoot $envGlobalConfig
     $nugetRepo = Get-DesiredNugetRepo $envGlobalConfig $nugetRepoSource
     $appEnvConfigs = Get-DesiredAppConfigs $envGlobalConfig
     $versionConfig = Import-VersionSpec $versionSpec
-
     $targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
     Add-HostAsTrusted $targetNodes
-    $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot}
-    $appEnvConfigs | % { Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envPath }
+    $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot} | out-null
+    $allResult = @()
+    $appEnvConfigs | % { 
+        $deployAppResultVersion = Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envPath
+        $result = @{}
+        $result["package"] = $_.package
+        $result["version"] = $deployAppResultVersion
+        $allResult = $allResult + $result
+    }
+    return $allResult
 }
 
 Function Get-DesiredEnvConfig($envPath) {
@@ -116,7 +122,7 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
 
     $packageConfig = Import-PackageConfig $envPath $configFileName
     $finalPackageConfigFile = "$envPath\applied-app-configs\$configFileName.ini"
-    Build-FinalPackageConfigFile $packageConfig $envGlobalConfig.variables $finalPackageConfigFile
+    Build-FinalPackageConfigFile $packageConfig $envGlobalConfig.variables $finalPackageConfigFile | out-null
     $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
     Copy-FileRemote $server $finalPackageConfigFile $remoteConfigFile | out-null
 
@@ -125,10 +131,16 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
         $destAppPath = "$nodeDeployRoot\$package" 
         $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
         Import-Module $nudeployModule.FullName -Force
-        Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
+        $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
     } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features
 
     Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
+
+    
+    if($deployAppResultDir -match ".*$package\.(\d.*)") {
+        $deployAppResultVersion = $matches[1]
+    }
+    return $deployAppResultVersion
 }
 
 Function Get-DesiredPackageVersion($package, $envConfig, $versionConfig) {
