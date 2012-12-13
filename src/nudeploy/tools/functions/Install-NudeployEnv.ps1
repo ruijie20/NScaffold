@@ -121,11 +121,13 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
     $configFileName = Get-DesiredPackageConfigFileName $envConfig
 
     $packageConfig = Import-PackageConfig $envPath $configFileName
-    $finalPackageConfigFile = "$envPath\applied-app-configs\$configFileName.ini"
+    $appliedConfigsDir = "$envPath\applied-app-configs"
+    $finalPackageConfigFile = "$appliedConfigsDir\$configFileName.ini"
     Build-FinalPackageConfigFile $packageConfig $envGlobalConfig.variables $finalPackageConfigFile | out-null
     $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
     Copy-FileRemote $server $finalPackageConfigFile $remoteConfigFile | out-null
-
+    Remove-Item $appliedConfigsDir -r -Force -ErrorAction silentlycontinue
+    
     Run-RemoteScript $server {
         param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
         $destAppPath = "$nodeDeployRoot\$package" 
