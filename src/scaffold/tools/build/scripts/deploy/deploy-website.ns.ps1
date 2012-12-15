@@ -56,7 +56,7 @@ Get-Module -ListAvailable -Name "WebAdministration" | % {
 }
 
 if($applyConfig){
-    & $applyConfig $config $sourcePath
+    & $applyConfig $config $sourcePath $packageInfo
 }
 
 # $sourcePath and $config is visible to script file due to the parent scope is this file
