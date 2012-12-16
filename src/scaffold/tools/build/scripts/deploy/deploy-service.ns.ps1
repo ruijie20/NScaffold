@@ -3,6 +3,7 @@ param([Parameter(Position = 0, Mandatory = $true, ParameterSetName = "configFile
     [string]$configFile, 
     [Parameter(Position = 0, Mandatory = $true, ParameterSetName = "configObject")]
     [hashtable]$configObject, 
+    [string]$executablePath, 
     [string]$packageRoot = (Get-Location).ProviderPath, 
     $features=@(), 
     [ScriptBlock] $applyConfig)
@@ -11,12 +12,11 @@ trap {
     throw $_
 }
 
-
 $root = $MyInvocation.MyCommand.Path | Split-Path -Parent
 $folderName = ($MyInvocation.MyCommand.Path | Split-Path -Leaf).TrimEnd(".ns.ps1")
 $featuresFolder = "$root\$folderName"
-$webConfigFile = Get-ChildItem $packageRoot -Recurse -Filter "web.config" | select -first 1 
-$sourcePath = Split-Path $webConfigFile.FullName -Parent
+$appConfigFile = Get-ChildItem $packageRoot -Recurse -Filter "*.config" | select -first 1 
+$sourcePath = Split-Path $appConfigFile.FullName -Parent
 
 # include libs
 if(-not $libsRoot) {
@@ -42,52 +42,46 @@ if($PsCmdlet.ParameterSetName -eq 'configFile') {
     $config = Generate-Config $sourcePath $packageInfo.packageId
 }
 
-# import WebAdministration module
-if([IntPtr]::size -ne 8){
-    throw "'WebAdministration' module can only run in 64 bit powershell"
-}
-Get-Module -ListAvailable -Name "WebAdministration" | % {
-    if(-not(Test-ServiceStatus "W3SVC")) {
-        Set-Service -Name WAS -Status Running -StartupType Automatic
-        Set-Service -Name W3SVC -Status Running -StartupType Automatic
-    }    
-    Import-Module WebAdministration
-}
-
 if($applyConfig){
     & $applyConfig $config $sourcePath $packageInfo
 }
 
-# $sourcePath and $config is visible to script file due to the parent scope is this file
-# so it is also visible to this action due to it's called by those scripts
 $installAction = {
+    param($sourcePath, $config, $executablePath)
+    $name = $config.ServiceName
+    $installPath = $config.ServicePath
 
-    $webSiteName = $config.siteName
-    $webSitePath = "IIS:\Sites\$webSiteName"
-    $physicalPath = $config.physicalPath
-
-    if(-not (Test-Path $webSitePath)) {
-        throw "Website [$webSitePath] does not exists!"
+    Function Test-ServiceExisted($name) {
+        (Get-Service | Where-Object {$_.Name -eq $name} | Measure-Object).Count -eq 1
     }
 
-    $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
-    New-Item $tempDir -type Directory | Out-Null
-    Set-ItemProperty $webSitePath physicalPath $tempDir
-    Write-Host "Website [$webSiteName] is ready."
-    SLEEP -second 2
+    while(Test-ServiceStatus $name "Running"){
+        Write-Host "Service[$name] is running. Start stop it." 
+        Stop-Service $name
+        SLEEP -second 2
+    }
+    if (Test-Path $installPath) {
+        Remove-Item $installPath    
+    }
 
-    if($sourcePath -ne $physicalPath){
-        Clear-Directory $physicalPath
-        Copy-Item "$sourcePath\*" -Destination $physicalPath -Recurse
-    }    
-    Set-ItemProperty $webSitePath physicalPath $physicalPath
-    Start-Website $webSiteName
-    SLEEP -second 2
-    Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+    Write-Host "start copy $sourcePath to $installPath" -f green
+    Copy-Item $sourcePath $installPath -Recurse
+
+    if(-not(Test-ServiceExisted $name)){
+        Write-Host "Create Service[$name] for $installPath\$executablePath"             
+        New-Service -Name $name -BinaryPathName "$installPath\$executablePath" -Description $name -DisplayName $name -StartupType Automatic
+    }else{
+        Write-Host "Service[$name] already exists" -f green
+    }
+
+    Start-Service -Name $name
+
+    if(-not (Test-ServiceStatus $name "Running")){
+        throw "Service[$name] is NOT running after installation."
+    }
 }
 
-$installClosure = Make-Closure $installAction
-
+$installClosure = Make-Closure $installAction $sourcePath, $config, $executablePath
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
         $featureScript = "$featuresFolder\$feature.ps1"
@@ -101,5 +95,4 @@ foreach ($feature in $features){
         } "$featureScript", $installClosure
     }
 }
-
 Run-Closure $installClosure
