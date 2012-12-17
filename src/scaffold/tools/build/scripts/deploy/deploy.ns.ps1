@@ -6,7 +6,8 @@ param([Parameter(Position = 0, Mandatory = $true, ParameterSetName = "configFile
     [string]$type,
     [string]$packageRoot = (Get-Location).ProviderPath, 
     $features=@(),     
-    [ScriptBlock] $applyConfig)
+    [ScriptBlock] $applyConfig,
+    [hashtable]$installArgs)
 
 trap {
     throw $_
@@ -29,26 +30,26 @@ $featuresFolder = "$root\deploy-$type"
 if (-not (Test-Path "$featuresFolder\default.ns.ps1")) {
     throw "Deploy [$type] is not supported. "
 }
-$defaultFeature = & "$featuresFolder\default.ns.ps1" $packageRoot
-$sourcePath = $defaultFeature.sourcePath
-$packageInfo = Get-PackageInfo $packageRoot
+$defaultFeature = & "$featuresFolder\default.ns.ps1" $packageRoot $installArgs
+
+$packageInfo = $defaultFeature.packageInfo
 
 # get config
 if($PsCmdlet.ParameterSetName -eq 'configFile') {
     $config = Import-Config $configFile | 
-        Patch-Config -p (Generate-Config $sourcePath $packageInfo.packageId)
+        Patch-Config -p (Generate-PackageConfig $packageInfo)
 } elseif ($PsCmdlet.ParameterSetName -eq 'configObject') {
     $config = $configObject | 
-        Patch-Config -p (Generate-Config $sourcePath $packageInfo.packageId)
+        Patch-Config -p (Generate-PackageConfig $packageInfo)
 } else {
-    $config = Generate-Config $sourcePath $packageInfo.packageId
+    $config = Generate-PackageConfig $packageInfo
 }
 
 if($applyConfig){
-    & $applyConfig $config $sourcePath $packageInfo
+    & $applyConfig $config $packageInfo
 }
 
-$installClosure = Make-Closure $defaultFeature.installAction $sourcePath, $config
+$installClosure = Make-Closure $defaultFeature.installAction $config, $packageInfo, $installArgs
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
         $featureScript = "$featuresFolder\$feature.ps1"
