@@ -30,6 +30,7 @@ $featuresFolder = "$root\deploy-$type"
 if (-not (Test-Path "$featuresFolder\default.ns.ps1")) {
     throw "Deploy [$type] is not supported. "
 }
+. PS-Require "$featuresFolder\functions"
 $defaultFeature = & "$featuresFolder\default.ns.ps1" $packageRoot $installArgs
 
 $packageInfo = $defaultFeature.packageInfo

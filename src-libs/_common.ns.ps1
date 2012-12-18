@@ -1,8 +1,10 @@
 Function PS-Require($folder) {
-    Get-ChildItem "$folder" -Filter *.ps1 -Recurse | 
-        ? { -not ($_.Name.Contains(".Tests.")) } | % {
-            . $_.FullName
-        }    
+    if(Test-Path $folder){
+        Get-ChildItem "$folder" -Filter *.ps1 -Recurse | 
+            ? { -not ($_.Name.Contains(".Tests.")) } | % {
+                . $_.FullName
+            }            
+    }
 }
 
 Function PS-Include ($path) {
