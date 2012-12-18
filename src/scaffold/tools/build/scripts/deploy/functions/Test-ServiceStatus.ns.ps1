@@ -1,3 +1,8 @@
-Function Test-ServiceStatus($name, $status="Running") {
-    (Get-Service -Name $name | ? {$_.Status -eq $status} | Measure-Object).Count -eq 1
+Function Test-ServiceStatus($name, $status) {
+	$serv = Get-Service -Name $name -ErrorAction SilentlyContinue
+	if($serv -and $status){
+		$serv.Status -eq $status
+	} else {
+		$false	
+	}   
 }
