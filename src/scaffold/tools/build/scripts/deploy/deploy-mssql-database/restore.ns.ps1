@@ -1,5 +1,8 @@
 param($config, $packageInfo, [ScriptBlock] $installAction)
-Write-Host "Clean TQAdmin database" -f green
+Write-Host "Clean database" -f green
+
+$dir = $MyInvocation.MyCommand.Path | Split-Path -Parent
+$scriptDir = "$dir\functions\db-scripts"
 Remove-Database -server $config.server -database $config.dbName
 
 
