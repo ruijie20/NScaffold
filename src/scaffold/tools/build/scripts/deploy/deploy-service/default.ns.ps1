@@ -15,7 +15,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
         $name = $config.ServiceName
         $installPath = $config.ServicePath
 
-        for($i = 0; $i < 5; $i++){
+        for($i = 0; $i -lt 5; $i++){
             if(Test-ServiceStatus $name "Running"){
                 Write-Host "Service[$name] is running. Start stop it." 
                 Stop-Service $name
