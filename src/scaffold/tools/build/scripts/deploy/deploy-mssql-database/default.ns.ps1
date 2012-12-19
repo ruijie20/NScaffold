@@ -7,7 +7,12 @@ $packageInfo = Get-PackageInfo $packageRoot
     'installAction' = {
         param($config, $packageInfo, $installArgs)
         if($installArgs.migrate){
-            Run-Closure $installArgs.migrate
+            if(Test-DBExisted $config.server $config.dbName) {
+                Run-Closure $installArgs.migrate
+            }
+            else {
+                throw "Database [$($config.dbName)] does not exist in server [$($config.server)]. "
+            }
         } else{
             throw "Please specify migrate action in installArgs as closure. "
         }
