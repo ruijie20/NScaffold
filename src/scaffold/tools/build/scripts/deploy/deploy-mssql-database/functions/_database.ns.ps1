@@ -1,22 +1,20 @@
 Function Invoke-SqlScript {
 	param($server, $file, $variables = @{}, $database ="master")
 
-	Trace-Progress "Invoke-SqlScript [$file] on server [$server]" {
-		$commandLine = "sqlcmd -E -S `"$server`" -d $database -i `"$file`""
-
-		Write-Hashtable $variables
-		$variables.keys | % { 
-			$commandLine = $commandLine + " -v $_=`"$($variables[$_])`""
-		}
-
-		iexsqlcmdf $commandLine
+	$commandLine = "sqlcmd -E -S `"$server`" -d $database -i `"$file`""
+	$variables.GetEnumerator() | sort-object -Property Name | % {
+		$commandLine += " -v $($_.Key)=`"$($_.Value)`""
+	}
+	Invoke-Expression $commandLine
+	if ($LASTEXITCODE -ne 0) {
+	    throw "Error when exec sql command `n$commandLine"
 	}
 }
 
 Function Remove-Database {
 	param($server, $database)
 
-	Invoke-SqlScript -Server $server -File "$scriptDir\sql\drop_db.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\drop_db.sql" `
 		-Variables @{ DatabaseName = $database }
 }
 
@@ -33,13 +31,13 @@ Function New-DBServerLogin {
 	param($server, $login, $loginPassword)
 
 	$winntUserName = Convert-WinNTUsername $login
-	
-	if($loginPassword -and (-not (Test-UserExist $winntUserName))){
-		New-LocalUser $winntUserName $loginPassword | Out-Null
-        Add-UserIntoGroup $winntUserName "IIS_IUSRS"
+	$username = Get-Username $winntUserName
+	if($loginPassword -and (-not (Test-User $username))){
+		New-LocalUser $username $loginPassword | Out-Null
+        Add-UserIntoGroup $username "IIS_IUSRS"
 	}
 	
-	Invoke-SqlScript -Server $server -File "$scriptDir\sql\create_login.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\create_login.sql" `
 		-Variables @{ Name = $winntUserName }	
 }
 
@@ -47,7 +45,7 @@ Function Remove-DBServerLogin {
 	param($server, $login)
 
 	$winntUserName = Convert-WinNTUsername $login
-	Invoke-SqlScript -Server $server -File "$scriptDir\sql\drop_login.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\drop_login.sql" `
 		-Variables @{ Name = $winntUserName }
 }
 
@@ -55,7 +53,7 @@ Function Grant-RWPermissions {
 	param($server, $database, $user)
 
 	$winntUserName = Convert-WinNTUsername $user
-	Invoke-SqlScript -server $server -file "$scriptDir\sql\give_rw_permissions.sql" `
+	Invoke-SqlScript -server $server -file "$scriptDir\give_rw_permissions.sql" `
 		-variables @{
 			DatabaseName 	= $database
 			Username 		= $winntUserName
@@ -74,7 +72,7 @@ Function New-DatabaseUser {
 	param($server, $database, $user)	
 
 	$winntUserName = Convert-WinNTUsername $user
-	Invoke-SqlScript -Server $server -File "$scriptDir\sql\create_db_user.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\create_db_user.sql" `
 		-Variables @{ 
 			ApplicationDatabaseName = $database
 			Name = $winntUserName 
@@ -84,15 +82,18 @@ Function New-DatabaseUser {
 Function Add-JobToRebuildIndex {
 	param($server, $database)
 
-	Invoke-SqlScript -Server $server -File "$scriptDir\sql\job_to_rebuild_index.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\job_to_rebuild_index.sql" `
 		-Variables @{ targetDBName = $database }
 }
 
 Function Invoke-SqlCommand {
 	param($server, $database = "master", $command)
 
-	Trace-Progress "Invoke-SqlCommand [$command] on server [$server]" {
-		iexsqlcmdf "sqlcmd -E -S $server -d $database -Q `"$command`""		
+	$commandLine = "sqlcmd -E -S $server -d $database -Q `"$command`""
+	
+	Invoke-Expression $commandLine
+	if ($LASTEXITCODE -ne 0) {
+	    throw "Error when exec sql command `n$commandLine"
 	}
 }
 
@@ -104,4 +105,18 @@ Function Test-DBExisted($server, $database_name) {
 Function Test-TableExisted($server, $database_name ,$table_name) {
 	$output = Invoke-SqlCommand -server $server -database $database_name -command "select count(name) from sys.tables where name = '$table_name'"
 	return $output[2] -match "1" 
+}
+
+
+Function Get-Username ($username) {
+    $tmp = $username.split('\')
+    if(($tmp.Length -lt 1) -or ($tmp.Length -gt 2)) {
+        throw "Parameter(username):$username must be format with 'username' or 'domain\username'!"
+    }
+    if($tmp.Length -eq 2) {
+        $result = $tmp[1]
+    }else{
+        $result = $username;
+    }
+    return $result
 }

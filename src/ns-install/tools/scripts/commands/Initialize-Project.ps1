@@ -31,7 +31,7 @@ Function Apply-Scaffold ($scaffoldDir, $projectPath) {
 
 Function Clean-Scaffold([string]$projectPath){
 	Remove-Item $projectPath\*.ns.ps1
-    if (Test-Path "$projectPath\build") {
-        Get-ChildItem "$projectPath\build" -filter *.ns.ps1 -Recurse | Remove-Item    
+    if (Test-Path "$projectPath\build") {        
+        Get-ChildItem "$projectPath\build" -include *.ns.ps1, *.ns.sql -Recurse | Remove-Item    
     }	
 }

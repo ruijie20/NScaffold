@@ -2,8 +2,9 @@
 # use go.ext.ps1 to extend
 param(
     $target, 
-    [string[]] $packageId=@(),
-    $env="dev"
+    [string[]] $packageId= @(),
+    $env="dev", 
+    [string[]] $features
 )
 
 trap{
@@ -66,6 +67,7 @@ $buildParmeters = @{
     "nuget" = $nuget
     "environmentsRoot" = "$buildScriptRoot\environments"
     "packageId" = $packageId
+    "features" = $features
 }
 
 . Register-Extension $MyInvocation.MyCommand.Path

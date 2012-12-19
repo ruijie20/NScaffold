@@ -60,7 +60,7 @@ foreach ($feature in $features){
     if($featureScript){
         $installClosure = Make-Closure { 
             param($scriptFile, $c)
-            & "$scriptFile" $config $packageInfo {Run-Closure $c}
+            & "$scriptFile" $config $packageInfo $installArgs {Run-Closure $c}
         } "$featureScript", $installClosure
     }
 }

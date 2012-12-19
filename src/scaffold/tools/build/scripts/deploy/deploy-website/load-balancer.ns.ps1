@@ -1,4 +1,4 @@
-param($config, $packageInfo, [ScriptBlock] $installAction)
+param($config, $packageInfo, $installArgs, [ScriptBlock] $installAction)
 
 $webSiteName = $config.siteName
 $webSitePath = "IIS:\Sites\$webSiteName"
