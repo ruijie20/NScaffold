@@ -4,7 +4,7 @@ param(
     $target, 
     [string[]] $packageId= @(),
     $env="dev", 
-    [string[]] $features
+    [string[]] $features = @()
 )
 
 trap{
