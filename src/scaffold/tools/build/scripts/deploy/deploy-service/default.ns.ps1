@@ -17,7 +17,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
 
         for($i = 0; $i -lt 5; $i++){
             if(Test-ServiceStatus $name "Running"){
-                Write-Host "Service[$name] is running. Start stop it." 
+                Write-Host "Service[$name] is running. Start to stop it." 
                 Stop-Service $name
             }            
         }
@@ -26,9 +26,9 @@ $packageInfo.Add("sourcePath", $sourcePath)
             Remove-Item $installPath -Force -Recurse
         }
 
-        Write-Host "start copy $sourcePath to $installPath" -f green
+        Write-Host "Start to copy $sourcePath to $installPath" -f green
         Copy-Item $sourcePath $installPath -Recurse
-
+        
         if(-not(Test-ServiceStatus $name)){
             Write-Host "Create Service[$name] for $installPath\$executablePath"             
             New-Service -Name $name -BinaryPathName "$installPath\$executablePath" -Description $name -DisplayName $name -StartupType Automatic
@@ -41,5 +41,6 @@ $packageInfo.Add("sourcePath", $sourcePath)
         if(-not (Test-ServiceStatus $name "Running")){
             throw "Service[$name] is NOT running after installation."
         }
+        Write-Host "Service started. " -f green
     }
 }

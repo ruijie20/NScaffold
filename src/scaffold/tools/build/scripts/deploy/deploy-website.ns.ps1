@@ -5,7 +5,8 @@ param([Parameter(Position = 0, Mandatory = $true, ParameterSetName = "configFile
     [hashtable]$configObject, 
     [string]$packageRoot = (Get-Location).ProviderPath, 
     $features=@(), 
-    [ScriptBlock] $applyConfig)
+    [ScriptBlock] $applyConfig, 
+    [hashtable]$installArgs)
 
 trap {
     throw $_
@@ -97,7 +98,7 @@ foreach ($feature in $features){
     if($featureScript){
         $installClosure = Make-Closure { 
             param($scriptFile, $c)
-            & "$scriptFile" $config $packageInfo {Run-Closure $c}
+            & "$scriptFile" $config $packageInfo $installArgs {Run-Closure $c}
         } "$featureScript", $installClosure
     }
 }
