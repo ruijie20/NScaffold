@@ -4,7 +4,7 @@ param(
     $target, 
     [string[]] $packageId= @(),
     $env="dev", 
-    [string[]] $features = @()
+    [string[]] $features
 )
 
 trap{
@@ -14,6 +14,7 @@ trap{
 }
 
 $error.clear()
+$LASTEXITCODE = 0
 
 $codeBaseRoot = $MyInvocation.MyCommand.Path | Split-Path -parent
 
@@ -67,7 +68,10 @@ $buildParmeters = @{
     "nuget" = $nuget
     "environmentsRoot" = "$buildScriptRoot\environments"
     "packageId" = $packageId
-    "features" = $features
+}
+
+if (-not ($features -eq $null)) {
+    $buildParmeters.Add("features", $features)
 }
 
 . Register-Extension $MyInvocation.MyCommand.Path

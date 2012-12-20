@@ -91,10 +91,10 @@ Task Deploy -description "Download from nuget server, deploy and install by runn
     $version = &$versionManager.retrive
     $packageId | % {
         exec {
-            if ($features) {
-                Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force -features $features
-            } else{
+            if ($features -eq $null) {
                 Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
+            } else{
+                Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force -features $features                
             }            
         }
     }    

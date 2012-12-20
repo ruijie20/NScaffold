@@ -26,10 +26,10 @@ Function Install-NuDeployPackage(){
                 | ? {Test-Path "$_\install.ps1"} `
                 | % {
                         Use-Directory $_ {
-                            if ($features) {
-                                & ".\install.ps1" $config $features | out-null
+                            if ($features -eq $null) {
+                                & ".\install.ps1" $config
                             }else{
-                                & ".\install.ps1" $config | out-null
+                                & ".\install.ps1" $config $features
                             }
                         } 
                     } 
