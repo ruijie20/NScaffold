@@ -34,7 +34,7 @@ Function New-DBServerLogin {
 	$username = Get-Username $winntUserName
 	if($loginPassword -and (-not (Test-User $username))){
 		New-LocalUser $username $loginPassword | Out-Null
-        Add-UserIntoGroup $username "IIS_IUSRS"
+		Set-LocalGroup $username "IIS_IUSRS" -add
 	}
 	
 	Invoke-SqlScript -Server $server -File "$scriptDir\create_login.sql" `
