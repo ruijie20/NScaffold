@@ -20,7 +20,8 @@ $packageInfo.Add("sourcePath", $sourcePath)
     'packageInfo' = $packageInfo
     'installAction' = {
         param($config, $packageInfo, $installArgs)
-
+        
+        $sourcePath = $packageInfo.sourcePath
         $webSiteName = $config.siteName
         $webSitePath = "IIS:\Sites\$webSiteName"
         $physicalPath = $config.physicalPath
