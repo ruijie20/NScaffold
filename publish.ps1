@@ -19,4 +19,4 @@ $version = $sr.ReadToEnd()
 $response.close()
 $version = $version.trim()
 
-Copy-Item "\\10.18.7.148\nuget-temp-packages\NScaffold.NuDeploy.$version.nupkg" "\\10.18.7.148\nuget-integration-packages\"
+Copy-Item "\\10.18.7.148\c$\nuget-servers\nuget-pkgs-tmp\NScaffold.NuDeploy.$version.nupkg" "\\10.18.7.148\c$\nuget-servers\nuget-pkgs-integration\"
