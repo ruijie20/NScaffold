@@ -21,17 +21,14 @@ Function Install-NuDeployPackage(){
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
 
     $packageDir = Install-NuPackage $packageId $workingDir $version
-
-    $packageDir | ? {-not $ignoreInstall} `
-                | ? {Test-Path "$_\install.ps1"} `
-                | % {
-                        Use-Directory $_ {
-                            if ($features -eq $null) {
-                                & ".\install.ps1" $config
-                            }else{
-                                & ".\install.ps1" $config $features
-                            }
-                        } 
-                    } 
-    return $packageDir
+    if (-not $ignoreInstall -and (Test-Path "$packageDir\install.ps1")) {
+        Use-Directory $packageDir {
+            if ($features -eq $null) {
+                & ".\install.ps1" $config | Out-Null
+            }else{
+                & ".\install.ps1" $config $features | Out-Null
+            }
+        }         
+    }
+    $packageDir
 }

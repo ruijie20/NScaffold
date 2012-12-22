@@ -24,6 +24,7 @@ Describe "Install-NuDeployPackage" {
 
     It "should deploy the package and run install.ps1." {
         $packageRoot = Install-NuDeployPackage -packageId $packageName -source $nugetRepo -workingDir $workingDir
+        write-host $packageRoot -f yellow
         $packageVersion = "1.0"
         $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
