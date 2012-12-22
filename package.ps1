@@ -2,16 +2,16 @@ trap {
     write-host "Error found: $_" -f red
     exit 1
 }
-
-$dir = Join-Path $(Split-Path -parent $MyInvocation.MyCommand.Definition) "tmp\pkgs\"
+$root = Split-Path -parent $MyInvocation.MyCommand.Definition
+$dir = Join-Path $root "tmp\pkgs\"
 
 if(test-path .\tmp\pkgs\){
 	remove-item .\tmp\pkgs\*.*
 } else {
 	mkdir .\tmp\pkgs\
 }
-
-.\tools\nuget\NuGet.exe pack .\src\nudeploy\nscaffold.nudeploy.nuspec -NoPackageAnalysis -o $dir
+$nuget = "$root\tools\nuget\NuGet.exe"
+& $nuget pack .\src\nudeploy\nscaffold.nudeploy.nuspec -NoPackageAnalysis -o $dir
 
 $package = "NScaffold.NuDeploy"
 [regex]$regex = "NScaffold.NuDeploy.([\d\.]*)\.nupkg"
@@ -20,4 +20,4 @@ $version = $nupackagePath.FullName |  % { $regex.Matches($_) } | % { $_.Groups[1
 
 Set-Content "$dir\version.txt" $version
 
-Copy-Item "$dir\NScaffold.NuDeploy.$version.nupkg" "\\10.18.7.148\c$\nuget-servers\nuget-pkgs-tmp\NScaffold.NuDeploy.$version.nupkg"
+& $nuget push "$dir\NScaffold.NuDeploy.$version.nupkg" -source "http://10.18.7.148/nuget-server-tmp" "01634e7b-0c29-4c1d-b06f-d991b0730124"
