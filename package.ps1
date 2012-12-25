@@ -3,7 +3,7 @@ trap {
     exit 1
 }
 $root = Split-Path -parent $MyInvocation.MyCommand.Definition
-$dir = Join-Path $root "tmp\pkgs\"
+$dir = Join-Path $root "tmp\pkgs"
 
 if(test-path .\tmp\pkgs\){
 	remove-item .\tmp\pkgs\*.*
@@ -21,3 +21,7 @@ $version = $nupackagePath.FullName |  % { $regex.Matches($_) } | % { $_.Groups[1
 Set-Content "$dir\version.txt" $version
 
 & $nuget push "$dir\NScaffold.NuDeploy.$version.nupkg" -source "http://10.18.7.148/nuget-server-tmp" "01634e7b-0c29-4c1d-b06f-d991b0730124"
+
+if($LastExitCode -ne 0){
+	throw "nuget push fail."
+}
