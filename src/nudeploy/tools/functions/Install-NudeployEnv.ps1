@@ -2,7 +2,8 @@ Function Install-NuDeployEnv{
     param(
        [Parameter(Mandatory=$true, Position=0)][string] $envPath,
        [string] $versionSpec,
-       [string] $nugetRepoSource
+       [string] $nugetRepoSource,
+       [string] $nugetExeUrl
     )
     $envGlobalConfig = Get-DesiredEnvConfig $envPath
     $nodeDeployRoot = Get-DesiredNodeDeploymentRoot $envGlobalConfig
@@ -83,7 +84,15 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot){
     } -argumentList $nodeDeployRoot | out-null
 
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
-    Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
+    if(-not $nugetExeUrl){
+        Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
+    } else {
+        Run-RemoteScript $server {
+            param($nugetExeUrl, $nodeDeployRoot)
+            $webClient = new-object System.Net.WebClient
+            $webClient.DownloadFile($nugetExeUrl, "$nodeDeployRoot\tools\nuget.exe")
+        } -argumentList $nugetExeUrl, $nodeDeployRoot | out-null        
+    }    
 
     $nuDeployPackageId = 'NScaffold.NuDeploy'
     $nuDeploySource = Prepre-NudeploySource $nugetRepo
