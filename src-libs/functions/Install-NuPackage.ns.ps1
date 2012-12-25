@@ -14,12 +14,14 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     if(!$nuget){
         throw "`$nuget need to be set. "
     }
-    
-    $argument = "install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir"
-    Write-Host "Executing: $nuget $argument"
 
-    $nuGetInstallOutput = Redo-OnError $nuget $argument
-    Write-Host "Output: $nuGetInstallOutput" -f cyan
+    $cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir 2>&1"
+    Write-Host "Executing: $cmd"
+    $nuGetInstallOutput = Iex "$cmd"
+
+    if($LastExitCode -ne 0){
+        throw "$nuGetInstallOutput"
+    }    
 
     if($version){
         $installedVersion = $version
