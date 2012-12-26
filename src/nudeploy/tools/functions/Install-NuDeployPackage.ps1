@@ -24,9 +24,9 @@ Function Install-NuDeployPackage(){
     if (-not $ignoreInstall -and (Test-Path "$packageDir\install.ps1")) {
         Use-Directory $packageDir {
             if ($features -eq $null) {
-                & ".\install.ps1" $config | Out-Null
+                & ".\install.ps1" $config | Out-Default
             }else{
-                & ".\install.ps1" $config $features | Out-Null
+                & ".\install.ps1" $config $features | Out-Default
             }
         }         
     }
