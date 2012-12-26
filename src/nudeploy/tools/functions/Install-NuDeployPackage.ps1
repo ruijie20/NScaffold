@@ -22,6 +22,10 @@ Function Install-NuDeployPackage(){
 
     $packageDir = Install-NuPackage $packageId $workingDir $version
     if (-not $ignoreInstall -and (Test-Path "$packageDir\install.ps1")) {
+        if ($config -and (Test-Path "$packageDir\config.ini")){
+            Verify-Config $config "$packageDir\config.ini"
+        }
+        
         Use-Directory $packageDir {
             if ($features -eq $null) {
                 & ".\install.ps1" $config | Out-Default
@@ -29,6 +33,6 @@ Function Install-NuDeployPackage(){
                 & ".\install.ps1" $config $features | Out-Default
             }
         }         
-    }
+    }    
     $packageDir
 }

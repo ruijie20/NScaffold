@@ -61,7 +61,7 @@ Describe "Install-NuPackage" {
         (Test-Path $installResultFile).should.be($False)
         $fileCreateByBlock.should.exist()
     }
-    It "should report error if install failed." {
+    It "should throw error if install failed." {
         $nuget = $nugetExe
         $nugetSource = $nugetRepo
         $packageVersion = "0.9"
