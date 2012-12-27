@@ -1,15 +1,24 @@
-
 throw "Here specify environment related settings which will be visible for all tasks, comment this line after all set. "
 
 $buildNumber = $Env:BUILD_NUMBER
-$versionManager = @{
-    "generate" = {"1.0.0.$buildNumber"}
+$packageManager = @{
+    "generateVersion" = {"1.0.0.$buildNumber"}
     "store" = {
-        param($version)
-        Set-Content "$packageOutputDir\version.txt" $version
+        param($pkgs)
+        if (Test-Path "$packageOutputDir\pkgs.txt") {
+            Remove-Item "$packageOutputDir\pkgs.txt"
+        }
+        $pkgs.GetEnumerator() | Sort-Object -Property Name | % { 
+            Add-Content "$packageOutputDir\pkgs.txt" "$($_.Name).$($_.Value)"
+        }
     }
     "retrive" = {
-        Get-Content "http://10.18.8.119:8080/job/$jenkinsJobName/$jenkinsJobNo/artifact/tmp/nupkgs/version.txt" 
+        $pkgs = @{}
+        Get-Content "http://some/artifact/url/pkgs.txt" | % {
+            $info = Get-PackageInfo $_
+            $pkgs.Add($info.packageId, $info.version)
+        }
+        $pkgs
     }
 }
 

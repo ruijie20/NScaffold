@@ -45,7 +45,7 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
 
 Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
     Clear-Directory $packageOutputDir
-    $version = &$versionManager.generate
+    $version = &$packageManager.generateVersion
     $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId
 
     #default profile
@@ -73,8 +73,11 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
             }
         }
     }
-
-    &$versionManager.store $version
+    
+    $pkgs = @{}
+    $nodes | % { $pkgs.Add($_.id, $version) }
+    
+    &$packageManager.store $pkgs
 
     if($packageConfig.pushRepo){
         Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
@@ -84,13 +87,15 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
 }
 
 
-Task Deploy -description "Download from nuget server, deploy and install by running 'install.ps1' in the package"{
+Task Deploy -description "Download from nuget server and install"{
     if(-not $packageId){
         throw "packageId must be specified. "
     }
-    $version = &$versionManager.retrive
+
+    $pkgs = &$packageManager.retrive
     $packageId | % {
         exec {
+            $version = $pkgs[$_]
             if ($features -eq $null) {
                 Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
             } else{

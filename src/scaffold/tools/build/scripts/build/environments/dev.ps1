@@ -1,13 +1,23 @@
 throw "Here specify environment related settings which will be visible for all tasks, comment this line after all set. "
-# version manager
-$versionManager = @{
-    "generate" = {"1.0.0.0"}
+
+$packageManager = @{
+    "generateVersion" = {"1.0.0.0"}
     "store" = {
-        param($version)
-        Set-Content "$packageOutputDir\version.txt" $version
+        param($pkgs)
+        if (Test-Path "$packageOutputDir\pkgs.txt") {
+            Remove-Item "$packageOutputDir\pkgs.txt"
+        }
+        $pkgs.GetEnumerator() | Sort-Object -Property Name | % { 
+            Add-Content "$packageOutputDir\pkgs.txt" "$($_.Name).$($_.Value)"
+        }
     }
     "retrive" = {
-        Get-Content "$packageOutputDir\version.txt" 
+        $pkgs = @{}
+        Get-Content "$packageOutputDir\pkgs.txt" | % {
+            $info = Get-PackageInfo $_
+            $pkgs.Add($info.packageId, $info.version)
+        }        
+        $pkgs
     }
 }
 
