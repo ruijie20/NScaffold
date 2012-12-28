@@ -36,21 +36,48 @@ Describe "Install-NudeployEnv with no spec param" {
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
         $config = Import-Config $deploymentConfigFile
 
-		$config.DatabaseName.should.be("MyTaxes-int")
-		$config.AppPoolPassword.should.be("TWr0ys1ngh4m")
-		$config.DataSource.should.be("localhost")
-		$config.IISRoot.should.be('C:\IIS')
-		$config.WebsiteName.should.be("ConsentService-int")
-		$config.PWD.should.be("TWr0ys1ngh4m")
-		$config.WebsitePort.should.be("8888")
-		$config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
-		$config.DBHost.should.be("localhost")
-		$config.AppPoolName.should.be("ConsentService-int")
-		$config.AppPoolUser.should.be("ConsentService-int")
-		$config.MyTaxesDatabaseName.should.be("MyTaxes")
-		$config.AppName.should.be("ConsentService")
-		$config.ConsentServicePort.should.be("8888")
-		$config.ENV.should.be("int")
+        $config.DatabaseName.should.be("MyTaxes-int")
+        $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
+        $config.DataSource.should.be("localhost")
+        $config.IISRoot.should.be('C:\IIS')
+        $config.WebsiteName.should.be("ConsentService-int")
+        $config.PWD.should.be("TWr0ys1ngh4m")
+        $config.WebsitePort.should.be("8888")
+        $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
+        $config.DBHost.should.be("localhost")
+        $config.AppPoolName.should.be("ConsentService-int")
+        $config.AppPoolUser.should.be("ConsentService-int")
+        $config.MyTaxesDatabaseName.should.be("MyTaxes")
+        $config.AppName.should.be("ConsentService")
+        $config.ConsentServicePort.should.be("8888")
+        $config.ENV.should.be("int")
+    }
+}
+
+Describe "Install-NudeployEnv with spec nudeploy version in node server" {
+    Copy-Item $fixturesTemplate $fixtures -Recurse
+
+    & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -Version 0.0.1 -o $nugetRepo
+    & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -Version 0.0.2 -o $nugetRepo
+    & $nugetExe install $nuDeployPackageName -Source $nugetRepo -OutputDirectory $workingDir -NoCache
+    Import-Module "$workingDir\NScaffold.NuDeploy.0.0.2\tools\nudeploy.psm1" -Force
+
+    & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
+
+    It "should deploy the package on the host specified in env config with correct package configurations" {
+        $envPath = "$fixtures\config_spec_nudeploy"
+        $result = Install-NudeployEnv $envPath
+        
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package0.9")
+
+        $envConfig = & "$envPath\env.config.ps1"
+        "$($envConfig.nodeDeployRoot)\tools\NScaffold.NuDeploy.0.0.1".should.exist();
+        (Test-Path  "$($envConfig.nodeDeployRoot)\tools\NScaffold.NuDeploy.0.0.2").should.be($false);
     }
 }
 

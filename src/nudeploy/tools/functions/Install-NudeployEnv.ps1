@@ -8,11 +8,12 @@ Function Install-NuDeployEnv{
     $envGlobalConfig = Get-DesiredEnvConfig $envPath
     $nodeDeployRoot = Get-DesiredNodeDeploymentRoot $envGlobalConfig
     $nugetRepo = Get-DesiredNugetRepo $envGlobalConfig $nugetRepoSource
+    $nodeNuDeployVersion = $envGlobalConfig.nodeNuDeployVersion
     $appEnvConfigs = Get-DesiredAppConfigs $envGlobalConfig
     $versionConfig = Import-VersionSpec $versionSpec
     $targetNodes = $appEnvConfigs | % { $_.server } | Get-Unique
     Add-HostAsTrusted $targetNodes
-    $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot} | out-null
+    $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot $nodeNuDeployVersion} | out-null
     $allResult = @()
     $appEnvConfigs | % { 
         $deployAppResultVersion = Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envPath
@@ -72,7 +73,7 @@ Function Add-HostAsTrusted($targetNodes) {
     winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
 }
 
-Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot){
+Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion){
     Write-Host "Preparing to deploy on node [$server]...." -f cyan
 
     Run-RemoteScript $server {
@@ -101,7 +102,11 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot){
         param($nodeDeployRoot, $nuDeployPackageId, $nuDeploySource)
         Push-Location
         Set-Location "$nodeDeployRoot\tools"
-        & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource
+        if($nodeNuDeployVersion) {
+            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -version $nodeNuDeployVersion
+        }else{
+            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource
+        }
         Pop-Location
     } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-null
     Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
