@@ -10,6 +10,6 @@ Function Verify-Config($config, $refConfig){
     }
 
     if ($missing) {
-        throw "Missing configuration for $missing. "
+        Write-Warning "Missing configuration for $missing. "
     }
 }
