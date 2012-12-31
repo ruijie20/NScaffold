@@ -14,7 +14,7 @@ Function Invoke-SqlScript {
 Function Remove-Database {
 	param($server, $database)
 
-	Invoke-SqlScript -Server $server -File "$scriptDir\drop_db.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\drop_db.ns.sql" `
 		-Variables @{ DatabaseName = $database }
 }
 
@@ -37,7 +37,7 @@ Function New-DBServerLogin {
 		Set-LocalGroup $username "IIS_IUSRS" -add
 	}
 	
-	Invoke-SqlScript -Server $server -File "$scriptDir\create_login.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\create_login.ns.sql" `
 		-Variables @{ Name = $winntUserName }	
 }
 
@@ -45,7 +45,7 @@ Function Remove-DBServerLogin {
 	param($server, $login)
 
 	$winntUserName = Convert-WinNTUsername $login
-	Invoke-SqlScript -Server $server -File "$scriptDir\drop_login.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\drop_login.ns.sql" `
 		-Variables @{ Name = $winntUserName }
 }
 
@@ -53,7 +53,7 @@ Function Grant-RWPermissions {
 	param($server, $database, $user)
 
 	$winntUserName = Convert-WinNTUsername $user
-	Invoke-SqlScript -server $server -file "$scriptDir\give_rw_permissions.sql" `
+	Invoke-SqlScript -server $server -file "$scriptDir\give_rw_permissions.ns.sql" `
 		-variables @{
 			DatabaseName 	= $database
 			Username 		= $winntUserName
@@ -72,7 +72,7 @@ Function New-DatabaseUser {
 	param($server, $database, $user)	
 
 	$winntUserName = Convert-WinNTUsername $user
-	Invoke-SqlScript -Server $server -File "$scriptDir\create_db_user.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\create_db_user.ns.sql" `
 		-Variables @{ 
 			ApplicationDatabaseName = $database
 			Name = $winntUserName 
@@ -82,7 +82,7 @@ Function New-DatabaseUser {
 Function Add-JobToRebuildIndex {
 	param($server, $database)
 
-	Invoke-SqlScript -Server $server -File "$scriptDir\job_to_rebuild_index.sql" `
+	Invoke-SqlScript -Server $server -File "$scriptDir\job_to_rebuild_index.ns.sql" `
 		-Variables @{ targetDBName = $database }
 }
 
