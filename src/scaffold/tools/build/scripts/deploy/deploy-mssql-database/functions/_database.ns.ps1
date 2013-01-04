@@ -3,7 +3,7 @@ Function Invoke-SqlScript {
 
 	$commandLine = "sqlcmd -E -S `"$server`" -d $database -i `"$file`""
 	$variables.GetEnumerator() | sort-object -Property Name | % {
-		$commandLine += " -v $($_.Key)=`"$($_.Value)`""
+		$commandLine += " -v $($_.Key) = `"$($_.Value)`""
 	}
 	Invoke-Expression $commandLine
 	if ($LASTEXITCODE -ne 0) {

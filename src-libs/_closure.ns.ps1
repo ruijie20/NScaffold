@@ -10,11 +10,7 @@ Function Make-Closure{
 }
 
 Function Run-Closure {
-    param(
-        [Parameter(Position=0, 
-            Mandatory=$True, 
-            ValueFromPipeline=$True)] 
-         $closure)
+    param($closure)
     $argsArray = $closure.argsArray + $args
     $scriptBlock = $closure.scriptBlock
 

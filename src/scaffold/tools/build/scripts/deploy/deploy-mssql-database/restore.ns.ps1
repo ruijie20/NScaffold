@@ -18,7 +18,7 @@ if(-not (Test-DBExisted $config.server $config.dbName)){
 }
 
 if($config.userName){
-	$userNames = $config.userName.Split(",")
+	$userNames = $config.userName.Split(",") | % { $_.trim() } 
     $userNameInfos = $userNames | % { 
         $result = @{
             'prefix' = $env:COMPUTERNAME
