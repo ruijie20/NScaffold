@@ -8,7 +8,7 @@ $packageInfo = Get-PackageInfo $packageRoot
         param($config, $packageInfo, $installArgs)
         if($installArgs.migrate){
             if(Test-DBExisted $config.server $config.dbName) {
-                Run-Closure $installArgs.migrate
+                Run-Closure $installArgs.migrate $config
             }
             else {
                 throw "Database [$($config.dbName)] does not exist in server [$($config.server)]. "

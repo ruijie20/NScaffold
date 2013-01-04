@@ -15,7 +15,7 @@ Function Run-Closure {
             Mandatory=$True, 
             ValueFromPipeline=$True)] 
          $closure)
-    $argsArray = $closure.argsArray
+    $argsArray = $closure.argsArray + $args
     $scriptBlock = $closure.scriptBlock
 
     & $scriptBlock @argsArray
