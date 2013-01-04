@@ -28,9 +28,8 @@ Function Remove-DbLoginUser {
 }
 
 Function New-DBServerLogin {
-	param($server, $login, $loginPassword)
+	param($server, $winntUserName, $loginPassword)
 
-	$winntUserName = Convert-WinNTUsername $login
 	$username = Get-Username $winntUserName
 	if($loginPassword -and (-not (Test-User $username))){
 		New-LocalUser $username $loginPassword | Out-Null
@@ -50,9 +49,7 @@ Function Remove-DBServerLogin {
 }
 
 Function Grant-RWPermissions {
-	param($server, $database, $user)
-
-	$winntUserName = Convert-WinNTUsername $user
+	param($server, $database, $winntUserName)
 	Invoke-SqlScript -server $server -file "$scriptDir\give_rw_permissions.ns.sql" `
 		-variables @{
 			DatabaseName 	= $database
@@ -61,17 +58,14 @@ Function Grant-RWPermissions {
 }
 
 Function Grant-DBAccess{
-	param($server, $dbName, $user, $password)
-	$user =	Convert-WinNTUsername $user
-	New-DBServerLogin $server $user $password
-	New-DatabaseUser $server $dbName $user
-	Grant-RWPermissions $server $dbName $user
+	param($server, $dbName, $username)
+    Invoke-SqlScript -Server $server -File "$scriptDir\create_login.ns.sql" -Variables @{ Name = $username }
+    New-DatabaseUser $server $dbName $username
+    Grant-RWPermissions $server $dbName $username
 }
 
 Function New-DatabaseUser {
-	param($server, $database, $user)	
-
-	$winntUserName = Convert-WinNTUsername $user
+	param($server, $database, $winntUserName)
 	Invoke-SqlScript -Server $server -File "$scriptDir\create_db_user.ns.sql" `
 		-Variables @{ 
 			ApplicationDatabaseName = $database

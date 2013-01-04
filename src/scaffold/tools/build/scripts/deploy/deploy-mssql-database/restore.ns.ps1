@@ -15,15 +15,40 @@ if(-not (Test-DBExisted $config.server $config.dbName)){
         Write-Host  "No baseline schema. Restore baseline skiped." -f green
     }
 	
-}Else{
-	Write-Host  "Database already exists,restore canceled." -f green
 }
 
 if($config.userName){
 	$userNames = $config.userName.Split(",")
-	$userNames | %{
-		Grant-DBAccess $config.server $config.dbName $_ $config.password
-	}
+    $userNameInfos = $userNames | % { 
+        $result = @{
+            'prefix' = $env:COMPUTERNAME
+        }
+        if ($_ -match '(?:(?<prefix>[^\\]+)\\)?(?<name>.+)' ) {
+            if ($result.prefix -ne '{localhost}'){
+                $result.prefix = $Matches.prefix
+            }            
+            $result.name = $Matches.name
+        }
+        $result
+    }
+
+    $userNameInfos | % {        
+        if ($_.prefix -eq $env:COMPUTERNAME) {
+            if($config.password -and (-not (Test-User $_.name))){
+                New-LocalUser $_.name $config.password | Out-Null
+                Set-LocalGroup $_.name "IIS_IUSRS" -add
+            }
+        }
+        if ($_.prefix -eq "IIS AppPool") {
+            $appPoolPath = "IIS:\AppPools\$($_.name)"
+            if (-not (Test-Path $appPoolPath)) {
+                New-WebAppPool $_.name
+                Set-ItemProperty $appPoolPath ProcessModel.IdentityType 4
+            }  
+        }
+        $dbUserName = "$($_.prefix)\$($_.name)"
+        Grant-DBAccess $config.server $config.dbName $dbUserName
+    }
 }
 
 & $installAction
