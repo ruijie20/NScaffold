@@ -19,25 +19,8 @@ Describe "Install-NudeployEnv with no spec param" {
     & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.0 -o $nugetRepo
     & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
 
-    It "should deploy the package on the host specified in env config with correct package configurations" {
-        $envPath = "$fixtures\config"
-        $result = Install-NudeployEnv $envPath
-        $verf = ""
-        $result | % {
-            $verf = $verf + $_.package
-            $verf = $verf + $_.version
-        }
-        $verf.should.be("Test.Package1.0")
-
-        $envConfig = & "$envPath\env.config.ps1"
-        $packageName = "Test.Package"
-        $packageVersion = "1.0"
-        $packageRoot = "$($envConfig.nodeDeployRoot)\$packageName\$packageName.$packageVersion"
-        $deploymentConfigFile = "$packageRoot\deployment.config.ini"
-
-        $configFileSpy = "$packageRoot\config.txt"
-        $config = Import-Config $configFileSpy
-
+    Function Assert-GeneratedConfigFile($deploymentConfigFile){
+        $config = Import-Config $deploymentConfigFile
         $config.DatabaseName.should.be("MyTaxes-int")
         $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
         $config.DataSource.should.be("localhost")
@@ -54,6 +37,42 @@ Describe "Install-NudeployEnv with no spec param" {
         $config.ConsentServicePort.should.be("8888")
         $config.ENV.should.be("int")
     }
+
+    It "should deploy the package on the host specified in env config with correct package configurations" {
+        $envPath = "$fixtures\config"
+        $envConfigFile = "$envPath\env.config.ps1"
+        $result = Install-NudeployEnv $envConfigFile
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package1.0")
+
+        $envConfig = & $envConfigFile
+        $packageName = "Test.Package"
+        $packageVersion = "1.0"
+        $packageRoot = "$($envConfig.nodeDeployRoot)\$packageName\$packageName.$packageVersion"
+        Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+    }
+
+    It "should deploy the package given the envConfig folder" {
+        $envConfigFolder = "$fixtures\config"
+        $result = Install-NudeployEnv $envConfigFolder
+        $verf = ""
+        $result | % {
+            $verf = $verf + $_.package
+            $verf = $verf + $_.version
+        }
+        $verf.should.be("Test.Package1.0")
+
+        $envConfig = & "$envConfigFolder\env.config.ps1"
+        $packageName = "Test.Package"
+        $packageVersion = "1.0"
+        $packageRoot = "$($envConfig.nodeDeployRoot)\$packageName\$packageName.$packageVersion"
+        Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+    }
+
 }
 
 Describe "Install-NudeployEnv with spec nudeploy version in node server" {

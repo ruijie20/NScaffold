@@ -16,7 +16,7 @@ Function Install-NuDeployEnv{
     $targetNodes | % { Prepare-Node $_ $nugetRepo $nodeDeployRoot $nodeNuDeployVersion} | out-null
     $allResult = @()
     $appEnvConfigs | % { 
-        $deployAppResultVersion = Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envPath
+        $deployAppResultVersion = Deploy-App $_ $versionConfig $nugetRepo $nodeDeployRoot $envGlobalConfig.packageConfigFolder
         $result = @{}
         $result["package"] = $_.package
         $result["version"] = $deployAppResultVersion
@@ -26,11 +26,23 @@ Function Install-NuDeployEnv{
 }
 
 Function Get-DesiredEnvConfig($envPath) {
-    if (-not (Test-Path "$envPath\env.config.ps1")) {
-        throw "Please make sure 'env.config.ps1' exists under $envPath"
+    if(Test-Path -PathType Leaf $envPath){
+        $envConfigFile = $envPath
+    }elseif (Test-Path "$envPath\env.config.ps1") {
+        $envConfigFile = "$envPath\env.config.ps1"
+        Write-Host "Please provide the environment configuration file directly rather than as 'env.config.ps1' under \$envPath" -f yellow
+    }else{
+        throw "Please provide the environment configuration file directly or as '$envPath\env.config.ps1'"
     }
-    Write-Host "Using environment definition at [$envPath]..." -f cyan
-    & "$envPath\env.config.ps1"
+    Write-Host "Using environment definition at [$envConfigFile]..." -f cyan
+
+    $envGlobalConfig = & $envConfigFile
+    if(-not ($envGlobalConfig.packageConfigFolder)){
+        $envGlobalConfig.packageConfigFolder = "$envConfigFile\..\app-configs"
+    }
+    Write-Host "Using package config folder at [$($envGlobalConfig.packageConfigFolder)]..." -f cyan
+
+    $envGlobalConfig
 }
 
 Function Get-DesiredNodeDeploymentRoot($envGlobalConfig) {
@@ -127,16 +139,15 @@ Function Prepre-NudeploySource($nugetRepo) {
     }
 }
 
-Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $envPath) {
+Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $packageConfigFolder) {
     $server = $envConfig.server
     $package = $envConfig.package
     $version = Get-DesiredPackageVersion $package $envConfig $versionConfig
     $features = Get-DesiredPackageFeatures $envConfig
     $configFileName = Get-DesiredPackageConfigFile $envConfig
 
-    $packageConfig = Import-Config $configFileName
-    
-    $appliedConfigsDir = "$envPath\applied-app-configs"
+    $packageConfig = Import-PackageConfig $packageConfigFolder $configFileName
+    $appliedConfigsDir = "$packageConfigFolder\..\applied-app-configs"
     $finalPackageConfigFile = "$appliedConfigsDir\$configFileName.ini"
 
     $resolvedPackageConfig = Get-ResolvedPackageConfig $packageConfig
@@ -183,8 +194,12 @@ Function Get-DesiredPackageConfigFile($envConfig) {
     $configFileName = $envConfig.config
     if(-not $configFileName){
         $configFileName = $envConfig.package
-    }    
-    $configFullPath = "$envPath\app-configs\$configFileName.ini"
+    }
+    $configFileName
+}
+
+Function Import-PackageConfig($packageConfigFolder, $configFileName) {
+    $configFullPath = "$packageConfigFolder\$configFileName.ini"
     if (-not (Test-Path $configFullPath)) {
         throw "Config file [$configFullPath] does not exist. "
     }
