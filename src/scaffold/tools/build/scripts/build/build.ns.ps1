@@ -13,6 +13,7 @@ properties{
 
     $tmpDir = "$codeBaseRoot\tmp"
     $packageOutputDir = "$tmpDir\nupkgs"
+    $packageWorkingDir = "$tmpDir\working"
 
     # here include environment settings
     if (Test-Path "$environmentsRoot\$env.ps1") {
@@ -91,7 +92,7 @@ Task Deploy -description "Download from nuget server and install"{
     if(-not $packageId){
         throw "packageId must be specified. "
     }
-
+    Clear-Directory $packageWorkingDir
     $pkgs = &$packageManager.retrive
     $packageId | % {
         exec {

@@ -27,5 +27,5 @@ $packageConfig = @{
     "pushRepo" = "http://10.18.1.28/nuget-repo2"
     "apiKey" = "01634e7b-0c29-4c1d-b06f-d991b0730124"
     "pullRepo" = "http://10.18.1.28/nuget-repo2/nuget"
-    "installDir" = "c:\working-packages"
+    "installDir" = "$tmpDir\working"
 }
