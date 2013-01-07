@@ -50,7 +50,7 @@ if($applyConfig){
     & $applyConfig $config $packageInfo
 }
 
-$installClosure = Make-Closure $defaultFeature.installAction $config, $packageInfo, $installArgs
+$installClosure = {& $defaultFeature.installAction $config, $packageInfo, $installArgs}.GetNewClosure()
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
         $featureScript = "$featuresFolder\$feature.ps1"
@@ -58,11 +58,8 @@ foreach ($feature in $features){
         $featureScript = "$featuresFolder\$feature.ns.ps1"
     }
     if($featureScript){
-        $installClosure = Make-Closure { 
-            param($scriptFile, $c)
-            & "$scriptFile" $config $packageInfo $installArgs {Run-Closure $c}
-        } "$featureScript", $installClosure
+        $installClosure = {& $featureScript $config $packageInfo $installArgs $installClosure}.GetNewClosure()
     }
 }
 
-Run-Closure $installClosure
+& $installClosure
