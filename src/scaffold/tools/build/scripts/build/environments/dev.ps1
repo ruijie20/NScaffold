@@ -1,6 +1,6 @@
 throw "Here specify environment related settings which will be visible for all tasks, comment this line after all set. "
 
-$packageManager = @{
+@{
     "generateVersion" = {"1.0.0.0"}
     "store" = {
         param($pkgs)
@@ -19,10 +19,6 @@ $packageManager = @{
         }        
         $pkgs
     }
-}
-
-# nuget package config
-$packageConfig = @{
     "pushRepo" = ""
     "apiKey" = ""
     "pullRepo" = "$packageOutputDir"

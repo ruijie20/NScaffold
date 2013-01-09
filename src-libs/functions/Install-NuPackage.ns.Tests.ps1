@@ -8,7 +8,6 @@ $packageName = "Test.Package"
 
 $workingDir = "$TestDrive\deployment_package"
 
-. "$here\Redo-OnError.ns.ps1"
 . "$here\Install-NuPackage.ns.ps1"
 
 Describe "Install-NuPackage" {

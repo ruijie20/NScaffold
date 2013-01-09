@@ -8,7 +8,6 @@ properties{
 
     . PS-Require ".\functions"
     $env:EnableNuGetPackageRestore = "true"
-    . "$codebaseRoot\codebaseConfig.ps1"
     $yam = "$codebaseRoot\yam.ps1"
 
     $tmpDir = "$codeBaseRoot\tmp"
@@ -17,7 +16,7 @@ properties{
 
     # here include environment settings
     if (Test-Path "$environmentsRoot\$env.ps1") {
-        . "$environmentsRoot\$env.ps1"
+        $packageManager = & "$environmentsRoot\$env.ps1"
     }    
 }
 
@@ -80,9 +79,9 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     
     &$packageManager.store $pkgs
 
-    if($packageConfig.pushRepo){
+    if($packageManager.pushRepo){
         Get-ChildItem $packageOutputDir -Filter *.nupkg | % {
-            exec {&$nuget push $_.FullName -s $packageConfig.pushRepo $packageConfig.apiKey}
+            exec {&$nuget push $_.FullName -s $packageManager.pushRepo $packageManager.apiKey}
         }
     }
 }
@@ -98,9 +97,9 @@ Task Deploy -description "Download from nuget server and install"{
         exec {
             $version = $pkgs[$_]
             if ($features -eq $null) {
-                Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force
+                Install-NuDeployPackage $_ -version $version -s $packageManager.pullRepo -working $packageManager.installDir -Force
             } else{
-                Install-NuDeployPackage $_ -version $version -s $packageConfig.pullRepo -working $packageConfig.installDir -Force -features $features                
+                Install-NuDeployPackage $_ -version $version -s $packageManager.pullRepo -working $packageManager.installDir -Force -features $features                
             }            
         }
     }    

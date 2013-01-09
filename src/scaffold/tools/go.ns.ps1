@@ -50,15 +50,13 @@ PS-Get "yam" "0.0.5" -postInstall {
     . "$pkgDir\install.ps1" $codeBaseRoot
 }
 
-. "$codeBaseRoot\codebaseConfig.ps1"
+$codebaseConfig = & "$codeBaseRoot\codebaseConfig.ps1"
 # extra ps-gets
 if($codebaseConfig.extraPSGets) {
     $codebaseConfig.extraPSGets | % {
         PS-Get $_.packageId $_.version
     }    
 }
-
-Import-Module WebAdministration -Force
 
 $buildParmeters = @{ 
     "env" = "$env"
@@ -68,6 +66,7 @@ $buildParmeters = @{
     "nuget" = $nuget
     "environmentsRoot" = "$buildScriptRoot\environments"
     "packageId" = $packageId
+    "codebaseConfig" = $codebaseConfig
 }
 
 if (-not ($features -eq $null)) {
@@ -79,7 +78,7 @@ if (-not ($features -eq $null)) {
 
 Invoke-Psake $scriptRoot\build\build.ns.ps1 $target -Framework "4.0x64" -parameters $buildParmeters
 
-if(!$psake.build_success) {
+if(-not $psake.build_success) {
     write-host "============================= Environment: $env ==============================" -f yellow
     $buildParmeters | format-table | Out-String | write-host -f yellow
     throw "Failed to execute Task $target."
