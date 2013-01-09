@@ -1,4 +1,4 @@
 Function Get-PackageId ($nuspecFile) {
-    $xml = [xml] (Get-Content $nuspecFile)
-    $xml.SelectSingleNode("//id").InnerText.Trim()
+    $node = Select-Xml -Path $nuspecFile -XPath "//*[local-name()='id']/text()"
+    $node.Node.Value
 }
