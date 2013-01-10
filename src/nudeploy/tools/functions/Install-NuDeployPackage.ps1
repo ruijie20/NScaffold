@@ -1,14 +1,27 @@
 Function Install-NuDeployPackage(){
+    [CmdletBinding(DefaultParameterSetName="configFile")]   
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [string] $packageId, 
         [string] $version, 
         [string] $source, 
-        [string] $config,
+        [Parameter(ParameterSetName = "configFile")]
+        [alias("cf")]
+        [string]$configFile, 
+        [Parameter(ParameterSetName = "configObject")]
+        [alias("co")]
+        [hashtable]$cfgObject, 
         [string[]] $features, 
         [string] $workingDir = (Get-Location).ProviderPath, 
         [switch] $ignoreInstall,
         [switch] $force)
+
+    if($PsCmdlet.ParameterSetName -eq 'configObject') {
+        $config = [System.IO.Path]::GetTempFileName()
+        $cfgObject.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $config
+    } else {
+        $config = $configFile
+    }
 
     $outputDir = "$workingDir\$packageId.$version"
     if($force -and (Test-Path $outputDir)){
@@ -33,6 +46,9 @@ Function Install-NuDeployPackage(){
                 & ".\install.ps1" $config $features | Out-Default
             }
         }         
-    }    
+    }
+    if($PsCmdlet.ParameterSetName -eq 'configObject') {
+        Remove-Item $config -Force -ea SilentlyContinue
+    }
     $packageDir
 }

@@ -34,7 +34,9 @@ Describe "Install-NudeployEnv with no spec param" {
         $packageVersion = "1.0"
         $packageRoot = "$($envConfig.nodeDeployRoot)\$packageName\$packageName.$packageVersion"
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
-        $config = Import-Config $deploymentConfigFile
+
+        $configFileSpy = "$packageRoot\config.txt"
+        $config = Import-Config $configFileSpy
 
         $config.DatabaseName.should.be("MyTaxes-int")
         $config.AppPoolPassword.should.be("TWr0ys1ngh4m")

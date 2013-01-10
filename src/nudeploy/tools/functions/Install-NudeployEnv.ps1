@@ -132,23 +132,23 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
     $package = $envConfig.package
     $version = Get-DesiredPackageVersion $package $envConfig $versionConfig
     $features = Get-DesiredPackageFeatures $envConfig
-    $configFileName = Get-DesiredPackageConfigFileName $envConfig
+    $configFileName = Get-DesiredPackageConfigFile $envConfig
 
-    $packageConfig = Import-PackageConfig $envPath $configFileName
+    $packageConfig = Import-Config $configFileName
+    
     $appliedConfigsDir = "$envPath\applied-app-configs"
     $finalPackageConfigFile = "$appliedConfigsDir\$configFileName.ini"
-    Build-FinalPackageConfigFile $packageConfig $envGlobalConfig.variables $finalPackageConfigFile | out-null
-    $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
-    Copy-FileRemote $server $finalPackageConfigFile $remoteConfigFile | out-null
-    Remove-Item $appliedConfigsDir -r -Force -ErrorAction silentlycontinue
+
+    $resolvedPackageConfig = Get-ResolvedPackageConfig $packageConfig
     
     Run-RemoteScript $server {
-        param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
+        param($nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features)
         $destAppPath = "$nodeDeployRoot\$package" 
         $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
         Import-Module $nudeployModule.FullName -Force
-        $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
-    } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features
+        $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version `
+            -source $nugetRepo -workingDir $destAppPath -co $resolvedPackageConfig -features $features
+    } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features
 
     Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
 
@@ -180,27 +180,22 @@ Function Get-DesiredPackageFeatures($envConfig) {
     $features
 }
 
-Function Get-DesiredPackageConfigFileName($envConfig) {
+Function Get-DesiredPackageConfigFile($envConfig) {
     $configFileName = $envConfig.config
     if(-not $configFileName){
         $configFileName = $envConfig.package
-    }
-    $configFileName
-}
-
-Function Import-PackageConfig($envPath, $configFileName) {
+    }    
     $configFullPath = "$envPath\app-configs\$configFileName.ini"
     if (-not (Test-Path $configFullPath)) {
         throw "Config file [$configFullPath] does not exist. "
     }
-    Import-Config $configFullPath    
+    $configFullPath
 }
 
-Function Build-FinalPackageConfigFile($packageConfig, $envVariables, $fileName) {
+Function Get-ResolvedPackageConfig($packageConfig) {
+    $envVariables = $envGlobalConfig.variables
     if($envVariables){
         $packageConfig = Merge-HashTable $packageConfig $envVariables
     }
-    $packageConfig = Resolve-Variables $packageConfig
-    New-Item -Type File $fileName -Force
-    $packageConfig.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $fileName
+    Resolve-Variables $packageConfig
 }

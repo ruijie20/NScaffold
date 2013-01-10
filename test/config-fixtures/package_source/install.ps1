@@ -16,3 +16,5 @@ $fixturesSpy = "$packageRoot\features.txt"
 New-Item -Type File $fixturesSpy -Force
 $features | Set-Content $fixturesSpy
 
+$configFileSpy = "$packageRoot\config.txt"
+Copy-Item $configFile $configFileSpy
