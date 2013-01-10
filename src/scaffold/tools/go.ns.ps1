@@ -45,7 +45,7 @@ PS-Get "NScaffold.NuDeploy" "0.0.100" | % {
     Import-Module $nudeployModule.FullName -Force
 }
 
-PS-Get "yam" "0.0.5" -postInstall {
+PS-Get "yam" "0.0.6" -postInstall {
     param($pkgDir)
     . "$pkgDir\install.ps1" $codeBaseRoot
 }
