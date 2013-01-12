@@ -1,7 +1,7 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 @{
-	nugetRepo = "$here\..\nugetRepo"
+	nugetRepo = "$TestDrive\nugetRepo"
 	nodeDeployRoot = "$TestDrive\deployment_root"
 	nodeNuDeployVersion = "0.0.1"
 	variables = @{

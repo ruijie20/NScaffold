@@ -7,9 +7,10 @@ Function Install-NuDeployEnv{
     )
     $envGlobalConfig = Get-DesiredEnvConfig $envPath
     $versionConfig = Import-VersionSpec $versionSpec
+    Resolve-AllPackageVersion $envGlobalConfig $versionConfig
 
     Prepare-AllNodes $envGlobalConfig
-    Deploy-AllApps $envGlobalConfig $versionConfig
+    Deploy-AllApps $envGlobalConfig
 }
 
 Function Get-EnvConfigFilePath($envPath){
@@ -30,6 +31,7 @@ Function Get-DesiredEnvConfig($envPath) {
     $envGlobalConfig = & $envConfigFile
 
     Set-PackageConfigFolder $envGlobalConfig $envConfigFile
+    Set-DeploymentHistoryFolder $envGlobalConfig
     Set-NodeDeploymentRoot $envGlobalConfig
     Set-NugetRepo $envGlobalConfig $nugetRepoSource
     Assert-AppConfigs $envGlobalConfig
@@ -41,6 +43,13 @@ Function Set-PackageConfigFolder($envGlobalConfig, $envConfigFile) {
         $envGlobalConfig.packageConfigFolder = "$envConfigFile\..\app-configs"
     }
     Write-Host "Using package config folder at [$($envGlobalConfig.packageConfigFolder)]..." -f cyan
+}
+
+Function Set-DeploymentHistoryFolder($envGlobalConfig) {
+    if(-not ($envGlobalConfig.deploymentHistoryFolder)){
+        $envGlobalConfig.deploymentHistoryFolder = "$($envGlobalConfig.packageConfigFolder)\..\deployment-history"
+    }
+    Write-Host "Using deploymentHistoryFolder at [$($envGlobalConfig.deploymentHistoryFolder)]..." -f cyan
 }
 
 Function Set-NodeDeploymentRoot($envGlobalConfig) {
@@ -68,8 +77,35 @@ Function Import-VersionSpec($versionSpec) {
         $versionConfig = Import-Config $versionSpec
         Write-Host "Version spec is found:" 
         $versionConfig.GetEnumerator() | Sort-Object -Property Name | Out-Host
+    }else{
+        $versionConfig = @{}
     }
     $versionConfig
+}
+
+Function Resolve-LatestPackageVersion($package, $nugetRepo){
+    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+    Write-Host "$nuget list $package -source $nugetRepo"
+    if( (& $nuget list $package -source $nugetRepo | ? { 
+        $_ -match "^$package (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })){
+        Write-Host "Found lastest version $($matches['version']) for package [$package]"
+        return $matches['version']
+    }else{
+        throw "No version found for package [$package] in repo [$nugetRepo]"
+    }
+}
+
+Function Resolve-AllPackageVersion($envGlobalConfig, $versionConfig) {
+    $unversionPackages = $envGlobalConfig.apps | ? { -not $_.version }
+    if(-not $unversionPackages) {return}
+    $latestVersionPackages = $unversionPackages | % { $_.package } | Get-Unique | ? { -not ($versionConfig.keys -contains $_) }
+    if($latestVersionPackages){
+        $latestVersionPackages | %{ $versionConfig[$_] = Resolve-LatestPackageVersion $_ $envGlobalConfig.nugetRepo }
+    }
+    
+    $unversionPackages | % {$_.version = $versionConfig[$_.package]}
+    Write-Host "Resolved VersionSpec:"
+    $versionConfig | Out-Host
 }
 
 Function Prepare-AllNodes($envGlobalConfig){
@@ -137,46 +173,44 @@ Function Prepre-NudeploySource($nugetRepo) {
     }
 }
 
-Function Deploy-AllApps($envGlobalConfig, $versionConfig){
-    $allResult = @()
-    $envGlobalConfig.apps | % { 
-        $deployAppResultVersion = Deploy-App $_ $versionConfig $envGlobalConfig
-        $result = @{}
-        $result["package"] = $_.package
-        $result["version"] = $deployAppResultVersion
-        $allResult = $allResult + $result
-    }
-    $allResult
+Function Deploy-AllApps($envGlobalConfig){
+    $envGlobalConfig.apps | % { Deploy-App $_ $envGlobalConfig }
 }
 
-Function Deploy-App ($appConfig, $versionConfig, $envGlobalConfig) {
-    $nugetRepo = $envGlobalConfig.nugetRepo
-    $nodeDeployRoot = $envGlobalConfig.nodeDeployRoot 
-    $server = $appConfig.server
-    $package = $appConfig.package
-    $version = Get-DesiredPackageVersion $package $appConfig $versionConfig
-    $features = Get-DesiredPackageFeatures $appConfig
+Function Deploy-App ($appConfig, $envGlobalConfig) {
+    $appConfig.config = Get-DesiredPackageConfigFile $appConfig $envGlobalConfig
+    $appConfig.env = $envGlobalConfig.variables.ENV
 
-    $configFileName = Get-DesiredPackageConfigFileName $appConfig
-    $finalPackageConfigFile = New-PackageConfigFile $configFileName $envGlobalConfig.packageConfigFolder $envGlobalConfig.variables
-    $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
-    
-    Copy-FileRemote $server $finalPackageConfigFile $remoteConfigFile | out-null
-    
-    $deployAppResultDir = Run-RemoteScript $server {
-        param($nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features)
-        $destAppPath = "$nodeDeployRoot\$package" 
-        $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
-        Import-Module $nudeployModule.FullName -Force
-        Install-NuDeployPackage -packageId $package -version $version `
-            -source $nugetRepo -workingDir $destAppPath -co $resolvedPackageConfig -features $features
-    } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features
-    Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
-    
-    if($deployAppResultDir -match ".*$package\.(\d.*)") {
-        $deployAppResultVersion = $matches[1]
+    $features = Get-DesiredPackageFeatures $appConfig
+    $forceRedeploy = $features -contains "forceRedeploy"
+
+    Skip-IfAlreadyDeployed $envGlobalConfig.deploymentHistoryFolder $appConfig $forceRedeploy {
+        $nugetRepo = $envGlobalConfig.nugetRepo
+        $nodeDeployRoot = $envGlobalConfig.nodeDeployRoot 
+        $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
+        Copy-FileRemote $appConfig.server $appConfig.config $remoteConfigFile | out-null
+        Run-RemoteScript $appConfig.server {
+            param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
+            $destAppPath = "$nodeDeployRoot\$package" 
+            $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
+            Import-Module $nudeployModule.FullName -Force
+
+            $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
+        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $remoteConfigFile, $features
     }
-    return $deployAppResultVersion
+}
+
+Function Get-DesiredPackageConfigFile($appConfig, $envGlobalConfig){
+    $configFileName = Get-OriginalPackageConfigFileName $appConfig
+    New-PackageConfigFile $configFileName $envGlobalConfig.packageConfigFolder $envGlobalConfig.variables
+}
+
+Function Get-OriginalPackageConfigFileName($appConfig) {
+    $configFileName = $appConfig.config
+    if(-not $configFileName){
+        $configFileName = $appConfig.package
+    }
+    $configFileName
 }
 
 Function New-PackageConfigFile($configFileName, $packageConfigFolder, $variables){
@@ -187,19 +221,6 @@ Function New-PackageConfigFile($configFileName, $packageConfigFolder, $variables
     $finalPackageConfigFile
 }
 
-Function Get-DesiredPackageVersion($package, $envConfig, $versionConfig) {
-    $version = $envConfig.version
-    if ((-not $version) -and $versionConfig -and ($versionConfig[$package])){
-        $version = $versionConfig[$package]
-    }
-    if ($version) {
-        Write-Host "Deploying package [$package] with version [$version] to node [$server]...." -f cyan
-    }else{
-        Write-Host "Deploying package [$package] with version [LATEST] to node [$server]...." -f cyan
-    }
-    $version
-}
-
 Function Get-DesiredPackageFeatures($appConfig) {
     $features = $appConfig.features 
     if(-not $features) {
@@ -208,13 +229,8 @@ Function Get-DesiredPackageFeatures($appConfig) {
     $features
 }
 
-<<<<<<< HEAD
 Function Get-DesiredPackageConfigFile($envConfig) {
     $configFileName = $envConfig.config
-=======
-Function Get-DesiredPackageConfigFileName($appConfig) {
-    $configFileName = $appConfig.config
->>>>>>> [JY] refactor Install-NudeployEnv
     if(-not $configFileName){
         $configFileName = $appConfig.package
     }
