@@ -40,18 +40,29 @@ Function Setup-ConfigFixtures(){
     Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
     Copy-Item $fixturesTemplate $fixtures -Recurse
 }
-Function Get-ExpectedPackageInstallationPath($envConfigFile, $package, $version){
+Function Assert-PackageInstalled($envConfigFile, $package, $version, $script){
     $envConfig = & $envConfigFile
-    "$($envConfig.nodeDeployRoot)\$package\$package.$version"
-}
-Function Assert-PackageInstalled($envConfigFile, $package, $version){
-    $packageRoot = Get-ExpectedPackageInstallationPath $envConfigFile $package $version
+    $packageRoot = "$($envConfig.nodeDeployRoot)\$package\$package.$version"
     if(-not(Test-Path $packageRoot)){
-        throw "expect package[$package] with version[$version] to be installed in $packageRoot, actual not found"
+        throw "expect package[$package] with version[$version] to be installed in $packageRoot, actual is not installed"
+    }
+    if($script){
+        & $script $packageRoot
+    }
+}
+Function Remove-InstalledPackages($envConfigFile){
+    $envConfig = & $envConfigFile
+    Reset-Folder $envConfig.nodeDeployRoot
+}
+Function Assert-PackageNotInstalled($envConfigFile, $package, $version){
+    $envConfig = & $envConfigFile
+    $packageRoot = "$($envConfig.nodeDeployRoot)\$package\$package.$version"
+    if(Test-Path $packageRoot){
+        throw "expect package[$package] with version[$version] to be NOT installed in $packageRoot, actual is installed"
     }
 }
 
-Describe "Install-NudeployEnv with no spec param" {
+Describe "Install-NudeployEnv" {
     Function Assert-GeneratedConfigFile($deploymentConfigFile){
         $config = Import-Config $deploymentConfigFile
         $config.DatabaseName.should.be("MyTaxes-int")
@@ -71,26 +82,31 @@ Describe "Install-NudeployEnv with no spec param" {
         $config.ENV.should.be("int")
     }
 
-    Setup-ConfigFixtures
-    ReImport-NudeployModule
-    Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
     $envConfigFolder = "$fixtures\config"
     $envConfigFile = "$envConfigFolder\env.config.ps1"
 
-    It "should deploy the package on the host specified in env config with correct package configurations" {
+    It "should deploy the package on the host specified in env config with correct package configurations with no spec param" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
+
         Install-NudeployEnv $envConfigFile
 
-        Assert-PackageInstalled $envConfigFile "Test.Package" "1.0"
-        $packageRoot = Get-ExpectedPackageInstallationPath $envConfigFile "Test.Package" "1.0"
-        Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+        Assert-PackageInstalled $envConfigFile "Test.Package" "1.0" {
+            Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+        }
     }
 
-    It "should deploy the package given the envConfig folder" {
-        Install-NudeployEnv $envConfigFolder
+    It "should not deploy packages that have been deployed" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
 
-        Assert-PackageInstalled $envConfigFile "Test.Package" "1.0"
-        $packageRoot = Get-ExpectedPackageInstallationPath $envConfigFile "Test.Package" "1.0"
-        Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+        Install-NudeployEnv $envConfigFile
+
+        Remove-InstalledPackages $envConfigFile 
+        Install-NudeployEnv $envConfigFile
+        Assert-PackageNotInstalled $envConfigFile "Test.Package" "1.0"
     }
 }
 
@@ -127,18 +143,19 @@ Describe "Install-NudeployEnv with spec param" {
 
         Install-NudeployEnv -envPath $envConfigFile -versionSpec $vesrionSpecFile -nugetRepoSource $nugetRepo
 
-        Assert-PackageInstalled $envConfigFile "Test.Package" "0.9"
+        Assert-PackageInstalled $envConfigFile "Test.Package" "0.9" {
+            $config = Import-Config "$packageRoot\deployment.config.ini"
+            $config.DataSource.should.be("localhost1")
+            $config.DatabaseName.should.be("MyTaxes-local1")
+            $config.WebsiteName.should.be("ConsentService-local1")
+            $config.WebsitePort.should.be("80791")
+            $config.AppPoolName.should.be("ConsentService-local1")
+            $config.AppPoolUser.should.be("ConsentService-local1")
+            $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
+            $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
+        }
 
-        $packageRoot = Get-ExpectedPackageInstallationPath $envConfigFile "Test.Package" "0.9" 
-        $config = Import-Config "$packageRoot\deployment.config.ini"
-        $config.DataSource.should.be("localhost1")
-        $config.DatabaseName.should.be("MyTaxes-local1")
-        $config.WebsiteName.should.be("ConsentService-local1")
-        $config.WebsitePort.should.be("80791")
-        $config.AppPoolName.should.be("ConsentService-local1")
-        $config.AppPoolUser.should.be("ConsentService-local1")
-        $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
-        $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
+
     }
 }
 
