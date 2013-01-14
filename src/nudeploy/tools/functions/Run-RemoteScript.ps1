@@ -1,19 +1,13 @@
 Function Run-RemoteScript($server, [ScriptBlock]$scriptblock, $argumentList) {
 	if($server -eq "localhost") {
-		Save-Location {
+		Push-Location
+        try {
 			Invoke-Command -scriptblock $scriptblock -ArgumentList $argumentList
-		}
+		} finally {
+            Pop-Location
+        }
 	}
 	else {
 		Invoke-Command -ComputerName $server -scriptblock $scriptblock -ArgumentList $argumentList
 	}
-}
-
-Function Save-Location([ScriptBlock]$action) {
-    Push-Location
-    Try {
-        & $action
-    } Finally {
-        Pop-Location
-    }
 }

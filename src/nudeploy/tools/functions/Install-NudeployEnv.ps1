@@ -141,17 +141,16 @@ Function Deploy-App ($envConfig, $versionConfig, $nugetRepo, $nodeDeployRoot, $e
 
     $resolvedPackageConfig = Get-ResolvedPackageConfig $packageConfig
     
-    Run-RemoteScript $server {
+    $deployAppResultDir = Run-RemoteScript $server {
         param($nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features)
         $destAppPath = "$nodeDeployRoot\$package" 
         $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
         Import-Module $nudeployModule.FullName -Force
-        $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version `
+        Install-NuDeployPackage -packageId $package -version $version `
             -source $nugetRepo -workingDir $destAppPath -co $resolvedPackageConfig -features $features
     } -ArgumentList $nodeDeployRoot, $version, $package, $nugetRepo, $resolvedPackageConfig, $features
 
     Write-Host "Package [$package] has been deployed to node [$server] succesfully.`n" -f cyan
-
     
     if($deployAppResultDir -match ".*$package\.(\d.*)") {
         $deployAppResultVersion = $matches[1]
