@@ -15,13 +15,13 @@ Function Register-SuccessDeployment($root, $appConfig){
 	Remove-PreviousDeployment $root $appConfig.env $appConfig.server $appConfig.package
 
 	$fileName = Get-DeploymentHistoryFileName $appConfig.env $appConfig.server $appConfig.package $appConfig.version
-	$lastDeploymentConfig = "$root\$fileName.txt"
+	$lastDeploymentConfig = "$root\$fileName"
 	Copy-Item -Path $appConfig.config -Destination $lastDeploymentConfig
 }
 
 Function Test-AlreadyDeployed($root, $appConfig){
 	$fileName = Get-DeploymentHistoryFileName $appConfig.env $appConfig.server $appConfig.package $appConfig.version
-	$lastDeploymentConfig = "$root\$fileName.txt"
+	$lastDeploymentConfig = "$root\$fileName"
 	(Test-Path $lastDeploymentConfig) -and (Test-ConfigFileEqual $lastDeploymentConfig $appConfig.config)
 }
 
@@ -35,8 +35,8 @@ Function Remove-PreviousDeployment($root, $env, $server, $app){
 }
 
 Function Get-DeploymentHistoryFileName($env, $server, $app, $version){
-	$fileName = @($env, $server, $app, $version) -join '__'
-	"$fileName.txt"
+	$fileName = @($env, $server, $app, $version) -join '_'
+	"$fileName.ini"
 }
 
 Function Test-ConfigFileEqual($file1, $file2){

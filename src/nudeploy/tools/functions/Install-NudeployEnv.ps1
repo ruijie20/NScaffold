@@ -161,15 +161,15 @@ Function Deploy-App ($appConfig, $envConfig) {
     Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig $forceRedeploy {
         $nugetRepo = $envConfig.nugetRepo
         $nodeDeployRoot = $envConfig.nodeDeployRoot 
-        $remoteConfigFile = "$nodeDeployRoot\$configFileName.ini"
-        Copy-FileRemote $appConfig.server $appConfig.config $remoteConfigFile | out-null
+
+        $packageConfig = Import-Config $appConfig.config
         Run-RemoteScript $appConfig.server {
-            param($nodeDeployRoot, $version, $package, $nugetRepo, $remoteConfigFile, $features)
+            param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features)
             $destAppPath = "$nodeDeployRoot\$package" 
             $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
             Import-Module $nudeployModule.FullName -Force
 
-            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
-        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $remoteConfigFile, $features
+            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features        
+        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $packageConfig, $features
     }
 }
