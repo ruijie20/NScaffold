@@ -73,6 +73,20 @@ Function Assert-AppConfigs($envConfig) {
     if (-not $envConfig.apps) {
         throw "appEnvConfigs is not configured properly. "
     }    
+    $envConfig.apps | %{
+        if(-not($_.server)){
+            throw "Server of package $_.package is not found"
+        }
+        if(-not($_.version)){
+            throw "Version of package $_.package is not found"
+        }
+        if(-not($_.config) -or (-not (Test-Path $_.config))){
+            throw "Config of package $_.package is not found"
+        }
+    }
+    if(-not $envConfig.variables.ENV){
+        Write-Host 'Warning: Environment variables are not set in $envConfig.variables.ENV' -f yellow
+    }
 }
 
 Function Prepare-AllNodes($envConfig){
