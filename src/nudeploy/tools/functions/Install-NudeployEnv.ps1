@@ -47,20 +47,12 @@ Function Overwrite-ConfigValue($envConfig, $key, $value){
     }
 }
 
-Function Set-DefaultConfigValues($envConfig) {
+Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
+    $envConfig = Get-EnvConfig $envPath
     Set-DefaultConfigValue $envConfig 'nodeDeployRoot' "C:\deployment"
     Set-DefaultConfigValue $envConfig 'packageConfigFolder' "$($envConfig.configPath)\..\app-configs"
     Set-DefaultConfigValue $envConfig 'deploymentHistoryFolder' "$($envConfig.packageConfigFolder)\..\deployment-history"
-}
-
-Function Overwrite-NugetRepo($envConfig, $nugetRepoSource) {
     Overwrite-ConfigValue $envConfig 'nugetRepo' $nugetRepoSource
-}
-
-Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
-    $envConfig = Get-EnvConfig $envPath
-    Set-DefaultConfigValues $envConfig
-    Overwrite-NugetRepo $envConfig $nugetRepoSource
     Overwrite-AppVersionWithVersionSpec $envConfig $versionSpecPath
     Set-DefaultAppVersionWithLatestVersion $envConfig
     Set-DefaultAppConfigFile $envConfig

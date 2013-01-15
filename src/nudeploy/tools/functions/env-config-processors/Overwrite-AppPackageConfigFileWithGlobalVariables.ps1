@@ -1,28 +1,21 @@
 Function Overwrite-AppPackageConfigFileWithGlobalVariables($envConfig){
     $envConfig.apps | % { 
-        $_.config = New-PackageConfigFile $_.config $envConfig
+        $_.config = New-PackageConfigFile $_ $envConfig
         Write-Host "Overwritten config file[$($_.config)] for package[$($_.package)] on server[$($_.server)]"
     }
 }
 
-Function Merge-Config($packageConfig, $variables){
-    if($variables){
-        $packageConfig = Merge-HashTable $packageConfig $variables
-    }
-    Resolve-Variables $packageConfig
-}
-
-Function Write-NewConfigFile($packageConfig, $envConfig){
+Function Write-NewConfigFile($appConfig, $appPackageconfig, $envConfig){
     $appliedConfigsFolder = "$($envConfig.packageConfigFolder)\..\applied-app-configs"
-    $configFileName = (Get-Date).Ticks
-    $newPackageConfigPath = "$appliedConfigsFolder\$configFileName.ini"
+    $configFileName = "$($appConfig.package)-$($appConfig.version)-$((Get-Date).Ticks).ini"
+    $newPackageConfigPath = "$appliedConfigsFolder\$configFileName"
     New-Item -Type File $newPackageConfigPath -Force | Out-Null
-    $packageConfig.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $newPackageConfigPath 
+    $appPackageconfig.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $newPackageConfigPath 
     $newPackageConfigPath
 }
 
-Function New-PackageConfigFile($packageConfigPath, $envConfig){
-    $packageConfig = Import-Config $packageConfigPath
-    $packageConfig = Merge-Config $packageConfig $envConfig.variables
-    Write-NewConfigFile $packageConfig $envConfig
+Function New-PackageConfigFile($appConfig, $envConfig){
+    $appPackageconfig = Import-Config $appConfig.config
+    $appPackageconfig = Resolve-Variables $appPackageconfig $envConfig.variables
+    Write-NewConfigFile $appConfig $appPackageconfig $envConfig
 }

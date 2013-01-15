@@ -1,25 +1,25 @@
-Function Resolve-Variables($hashTable, $startSymbol = "\[", $endSymbol = "\]") {
-	$context = Build-ResolvingContext $hashTable $startSymbol $endSymbol
-	while($context.unresolved.count -gt 0) {
-		if(-not (Resolve-InContext $context $startSymbol $endSymbol)) {
-			$errorInfo = New-Object PSObject -prop $context.unresolved | Out-String
+Function Resolve-Variables($variables, $context, $startSymbol = "\[", $endSymbol = "\]") {
+	$variableGroup = Group-Variables $variables $startSymbol $endSymbol
+	while($variableGroup.unresolved.count -gt 0) {
+		if(-not (Resolve-InContext $variableGroup $context $startSymbol $endSymbol)) {
+			$errorInfo = New-Object PSObject -prop $variableGroup.unresolved | Out-String
 			throw "Cannot finish resolving because some value of placeholder is not defined!`n$errorInfo"
 		}
 	}
-	$context.resolved
+	$variableGroup.resolved
 }
 
-Function Build-ResolvingContext($hashTable, $startSymbol, $endSymbol) {
-	$context = @{ resolved = @{}; unresolved = @{} }
-	$hashTable.getEnumerator() | % {
+Function Group-Variables($variables, $startSymbol, $endSymbol) {
+	$variableGroup = @{ resolved = @{}; unresolved = @{} }
+	$variables.getEnumerator() | % {
 		if(Test-ValueResovled $_.value $startSymbol $endSymbol) {
-			$context.resolved[$_.key] = $_.value
+			$variableGroup.resolved[$_.key] = $_.value
 		}
 		else {
-			$context.unresolved[$_.key] = $_.value
+			$variableGroup.unresolved[$_.key] = $_.value
 		}
 	}
-	$context
+	$variableGroup
 }
 
 Function Test-ValueResovled($value, $startSymbol, $endSymbol) {
@@ -27,17 +27,18 @@ Function Test-ValueResovled($value, $startSymbol, $endSymbol) {
 	-not ($value -match $placeholderPattern)
 }
 
-Function Resolve-InContext($context, $startSymbol, $endSymbol) {
+Function Resolve-InContext($variableGroup, $context, $startSymbol, $endSymbol) {
 	$newlyResolvedKeys = @()
-	$context.unresolved.getEnumerator() | % {
-		$_.value = Replace-Placeholder $_.value $context.resolved $startSymbol $endSymbol
+	$variableGroup.unresolved.getEnumerator() | % {
+		$mergedContext = Merge-Hashtable $context $variableGroup.resolved
+		$_.value = Replace-Placeholder $_.value $mergedContext $startSymbol $endSymbol
 
 		if(Test-ValueResovled $_.value $startSymbol $endSymbol) {
-			$context.resolved[$_.key] = $_.value
+			$variableGroup.resolved[$_.key] = $_.value
 			$newlyResolvedKeys = $newlyResolvedKeys + $_.key
 		}
 	}
-	$newlyResolvedKeys | % { $context.unresolved.remove($_) }
+	$newlyResolvedKeys | % { $variableGroup.unresolved.remove($_) }
 	$newlyResolvedKeys.count -gt 0
 }
 

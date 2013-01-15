@@ -65,21 +65,16 @@ Function Assert-PackageNotInstalled($envConfigFile, $package, $version){
 Describe "Install-NudeployEnv" {
     Function Assert-GeneratedConfigFile($deploymentConfigFile){
         $config = Import-Config $deploymentConfigFile
+        $config.Count.should.be(9)
         $config.DatabaseName.should.be("MyTaxes-int")
         $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
         $config.DataSource.should.be("localhost")
-        $config.IISRoot.should.be('C:\IIS')
         $config.WebsiteName.should.be("ConsentService-int")
-        $config.PWD.should.be("TWr0ys1ngh4m")
         $config.WebsitePort.should.be("8888")
         $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
-        $config.DBHost.should.be("localhost")
         $config.AppPoolName.should.be("ConsentService-int")
         $config.AppPoolUser.should.be("ConsentService-int")
-        $config.MyTaxesDatabaseName.should.be("MyTaxes")
         $config.AppName.should.be("ConsentService")
-        $config.ConsentServicePort.should.be("8888")
-        $config.ENV.should.be("int")
     }
 
     $envConfigFolder = "$fixtures\config"
@@ -154,7 +149,6 @@ Describe "Install-NudeployEnv with spec param" {
             $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
             $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
         }
-
 
     }
 }
