@@ -169,7 +169,7 @@ Function Deploy-App ($appConfig, $envConfig) {
             $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
             Import-Module $nudeployModule.FullName -Force
 
-            $script:deployAppResultDir = Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
+            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -config $remoteConfigFile -features $features        
         } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $remoteConfigFile, $features
     }
 }
