@@ -69,6 +69,20 @@ Describe "Install-NudeployEnv" {
     It "should stop deployment when exception is thrown when installing a package" {
         Setup-ConfigFixtures
         ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source_with_error_exitcode\test_package.nuspec" 1.0 
+        $errorCode = 10
+
+        try{
+            Install-NudeployEnv $envConfigFile
+            throw "should not be here"
+        }catch{
+            $_.toString().should.be("install.ps1 end with exit code: $errorCode")
+        }
+    }
+
+    It "should stop deployment when exception is thrown when installing a package" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
         Publish-NugetPackage "$fixtures\package_source_exception\test_package.nuspec" 1.0 
 
         try{

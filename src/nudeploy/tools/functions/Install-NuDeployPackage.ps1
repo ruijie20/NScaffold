@@ -44,6 +44,9 @@ Function Install-NuDeployPackage(){
             }else{
                 & ".\install.ps1" $config $features | Out-Default
             }
+            if(-not($Lastexitcode -eq 0)){
+                throw "install.ps1 end with exit code: $Lastexitcode"
+            }
         }         
     }
     if($PsCmdlet.ParameterSetName -eq 'configObject') {
