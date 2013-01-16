@@ -63,6 +63,22 @@ Function Assert-PackageNotInstalled($envConfigFile, $package, $version){
 }
 
 Describe "Install-NudeployEnv" {
+
+    $envConfigFile = "$fixtures\config\env.config.ps1"
+
+    It "should stop deployment when exception is thrown when installing a package" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source_exception\test_package.nuspec" 1.0 
+
+        try{
+            Install-NudeployEnv $envConfigFile
+            throw "should not be here"
+        }catch{
+            $_.toString().should.be('exception thrown when install')
+        }
+    }
+
     Function Assert-GeneratedConfigFile($deploymentConfigFile){
         $config = Import-Config $deploymentConfigFile
         $config.Count.should.be(9)
@@ -76,9 +92,6 @@ Describe "Install-NudeployEnv" {
         $config.AppPoolUser.should.be("ConsentService-int")
         $config.AppName.should.be("ConsentService")
     }
-
-    $envConfigFolder = "$fixtures\config"
-    $envConfigFile = "$envConfigFolder\env.config.ps1"
 
     It "should deploy the package on the host specified in env config with correct package configurations with no spec param" {
         Setup-ConfigFixtures

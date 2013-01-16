@@ -15,7 +15,6 @@ Function Install-NuDeployPackage(){
         [string] $workingDir = (Get-Location).ProviderPath, 
         [switch] $ignoreInstall,
         [switch] $force)
-
     if($PsCmdlet.ParameterSetName -eq 'configObject') {
         $config = [System.IO.Path]::GetTempFileName()
         $cfgObject.GetEnumerator() | % { "$($_.key) = $($_.value)" } | Set-Content $config

@@ -120,9 +120,12 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion
         Push-Location
         Set-Location "$nodeDeployRoot\tools"
         if($nodeNuDeployVersion) {
-            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -version $nodeNuDeployVersion
+            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -version $nodeNuDeployVersion -NoCache
         }else{
-            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource
+            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -NoCache
+        }
+        if(-not($LASTEXITCODE -eq 0)){
+            throw "Setup nuDeployPackage failed"
         }
         Pop-Location
     } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-null
@@ -158,10 +161,12 @@ Function Deploy-App ($appConfig, $envConfig) {
         Run-RemoteScript $appConfig.server {
             param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features)
             $destAppPath = "$nodeDeployRoot\$package" 
-            $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
-            Import-Module $nudeployModule.FullName -Force
 
+            $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
+
+            Import-Module $nudeployModule.FullName -Force
             Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features        
+
         } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $packageConfig, $features
     }
 }
