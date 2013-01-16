@@ -66,6 +66,49 @@ Describe "Install-NudeployEnv" {
 
     $envConfigFile = "$fixtures\config\env.config.ps1"
 
+    Function Assert-GeneratedConfigFile($deploymentConfigFile){
+        $config = Import-Config $deploymentConfigFile
+        $config.Count.should.be(9)
+        $config.DatabaseName.should.be("MyTaxes-int")
+        $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
+        $config.DataSource.should.be("localhost")
+        $config.WebsiteName.should.be("ConsentService-int")
+        $config.WebsitePort.should.be("8888")
+        $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
+        $config.AppPoolName.should.be("ConsentService-int")
+        $config.AppPoolUser.should.be("ConsentService-int")
+        $config.AppName.should.be("ConsentService")
+    }
+
+    It "should deploy the package on the host specified in env config with correct package configurations with no spec param" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
+
+        $appsConfig = Install-NudeployEnv $envConfigFile
+        
+        $appsConfig.Count.should.be(1)
+        $app = $appsConfig[0]
+        $app.package = 'Test.Package'
+        $app.version = '1.0'
+
+        Assert-PackageInstalled $envConfigFile "Test.Package" "1.0" {
+            Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+        }
+    }
+
+    It "should not deploy packages that have been deployed" {
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
+
+        Install-NudeployEnv $envConfigFile
+
+        Remove-InstalledPackages $envConfigFile 
+        Install-NudeployEnv $envConfigFile
+        Assert-PackageNotInstalled $envConfigFile "Test.Package" "1.0"
+    }
+
     It "should stop deployment when exception is thrown when installing a package" {
         Setup-ConfigFixtures
         ReImport-NudeployModule
@@ -91,44 +134,6 @@ Describe "Install-NudeployEnv" {
         }catch{
             $_.toString().should.be('exception thrown when install')
         }
-    }
-
-    Function Assert-GeneratedConfigFile($deploymentConfigFile){
-        $config = Import-Config $deploymentConfigFile
-        $config.Count.should.be(9)
-        $config.DatabaseName.should.be("MyTaxes-int")
-        $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
-        $config.DataSource.should.be("localhost")
-        $config.WebsiteName.should.be("ConsentService-int")
-        $config.WebsitePort.should.be("8888")
-        $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
-        $config.AppPoolName.should.be("ConsentService-int")
-        $config.AppPoolUser.should.be("ConsentService-int")
-        $config.AppName.should.be("ConsentService")
-    }
-
-    It "should deploy the package on the host specified in env config with correct package configurations with no spec param" {
-        Setup-ConfigFixtures
-        ReImport-NudeployModule
-        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
-
-        Install-NudeployEnv $envConfigFile
-
-        Assert-PackageInstalled $envConfigFile "Test.Package" "1.0" {
-            Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
-        }
-    }
-
-    It "should not deploy packages that have been deployed" {
-        Setup-ConfigFixtures
-        ReImport-NudeployModule
-        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
-
-        Install-NudeployEnv $envConfigFile
-
-        Remove-InstalledPackages $envConfigFile 
-        Install-NudeployEnv $envConfigFile
-        Assert-PackageNotInstalled $envConfigFile "Test.Package" "1.0"
     }
 }
 

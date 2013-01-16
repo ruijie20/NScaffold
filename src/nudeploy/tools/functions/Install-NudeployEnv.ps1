@@ -6,8 +6,9 @@ Function Install-NuDeployEnv{
        [string] $nugetExeUrl
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
-    Prepare-AllNodes $envConfig
-    Deploy-AllApps $envConfig
+    Prepare-AllNodes $envConfig | Out-Null
+    Deploy-AllApps $envConfig | Out-Null
+    ,$envConfig.apps
 }
 
 Function Get-EnvConfigFilePath($envPath){
