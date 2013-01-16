@@ -1,3 +1,5 @@
+$here = $MyInvocation.MyCommand.Path | Split-Path -Parent
+$scriptDir = "$here\db-scripts"
 Function Invoke-SqlScript {
 	param($server, $file, $variables = @{}, $database ="master")
 
