@@ -5,7 +5,8 @@ $exeFile = Get-ChildItem $packageRoot -Recurse -Filter "$executablePath" | selec
 $sourcePath = Split-Path $exeFile.FullName -Parent
 $packageInfo = Get-PackageInfo $packageRoot
 $packageInfo.Add("sourcePath", $sourcePath)
-
+$retryCount = 60
+$retryIntervalInSec = 1
 @{
     'packageInfo' = $packageInfo
     'installAction' = {
@@ -15,11 +16,15 @@ $packageInfo.Add("sourcePath", $sourcePath)
         $name = $config.ServiceName
         $installPath = $config.ServicePath
 
-        for($i = 0; $i -lt 5; $i++){
+        for($i = 0; $i -lt $retryCount; $i++){
             if(Test-ServiceStatus $name "Running"){
                 Write-Host "Service[$name] is running. Start to stop it." 
                 Stop-Service $name
+                Sleep $retryIntervalInSec
             }            
+        }
+        if(Test-ServiceStatus $name "Running"){
+            throw "Not able to stop service $name"
         }
 
         if (Test-Path $installPath) {
