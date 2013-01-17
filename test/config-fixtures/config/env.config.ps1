@@ -15,6 +15,7 @@ $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 	 	@{
 			"server" = "localhost"
 			"package" = "Test.Package"
+			"features" = @("a","b")
 	 	}
 	)
 }

@@ -94,6 +94,8 @@ Describe "Install-NudeployEnv" {
 
         Assert-PackageInstalled $envConfigFile "Test.Package" "1.0" {
             Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
+            $features = Get-Content "$packageRoot\features.txt"
+            $features.should.be("a b")
         }
     }
 

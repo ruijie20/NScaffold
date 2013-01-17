@@ -152,7 +152,8 @@ Function Deploy-AllApps($envConfig){
 }
 Function Deploy-App ($appConfig, $envConfig) {
     $appConfig.env = $envConfig.variables.ENV
-    $forceRedeploy = $appConfig.features -contains "forceRedeploy"
+    $features = $appConfig.features
+    $forceRedeploy = $features -contains "forceRedeploy"
 
     Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig $forceRedeploy {
         $nugetRepo = $envConfig.nugetRepo
