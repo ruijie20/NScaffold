@@ -151,7 +151,7 @@ Function Deploy-App ($appConfig, $envConfig) {
     $features = $appConfig.features
     $forceRedeploy = $features -contains "forceRedeploy"
 
-    $appConfig.deployResult = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy {
+    $appConfig.exports = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy {
         $nugetRepo = $envConfig.nugetRepo
         $nodeDeployRoot = $envConfig.nodeDeployRoot 
 

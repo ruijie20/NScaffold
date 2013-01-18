@@ -26,7 +26,7 @@ Function Remove-DbLoginUser {
 	if($dbLoginUser -like "*\*") {
 		$dbLoginUser = Convert-WinNTUsername $dbLoginUser
 	}
-	Invoke-SqlCommand -server $server -database master -command "DROP LOGIN [$dbLoginUser]"
+	Invoke-SqlCommand -server $server -database master -command "DROP LOGIN [$dbLoginUser]" | Out-Default
 }
 
 Function New-DBServerLogin {
@@ -87,7 +87,7 @@ Function Invoke-SqlCommand {
 
 	$commandLine = "sqlcmd -E -S $server -d $database -Q `"$command`""
 	
-	Invoke-Expression $commandLine | Out-Default
+	Invoke-Expression $commandLine
 	if ($LASTEXITCODE -ne 0) {
 	    throw "Error when exec sql command `n$commandLine"
 	}

@@ -44,10 +44,11 @@ $packageInfo.Add("sourcePath", $sourcePath)
         Start-Website $webSiteName
         SLEEP -second 2
         Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Default
-
-        $website = Get-Item $webSitePath
-
-        @{
+    }
+    'export' = {
+        param($config, $packageInfo, $installArgs)
+        $website = Get-Item "IIS:\Sites\$($config.siteName)"
+        @{            
             "name" = $website.Name
             "bindings" = $website.bindings.collection | % {
                 @{

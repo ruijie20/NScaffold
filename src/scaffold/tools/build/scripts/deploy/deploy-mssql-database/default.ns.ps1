@@ -48,9 +48,12 @@ $packageInfo = Get-PackageInfo $packageRoot
                 Grant-DBAccess $config.server $config.dbName "$($_.prefix)\$($_.name)"
             }
         }
+    }
+    'export' = {
+        param($config, $packageInfo, $installArgs)
         @{
             'server' = $config.server 
             'dbName' = $config.dbName
-        }        
+        }
     }
 }

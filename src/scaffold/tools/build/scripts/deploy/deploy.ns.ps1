@@ -65,4 +65,8 @@ foreach ($feature in $features){
     }
 }
 
-Run-Closure $installClosure
+Run-Closure $installClosure | Out-Default
+
+if ($defaultFeature.export) {
+    & $defaultFeature.export $config $packageInfo $installArgs
+}
