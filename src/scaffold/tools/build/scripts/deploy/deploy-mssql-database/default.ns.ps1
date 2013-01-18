@@ -19,7 +19,7 @@ $packageInfo = Get-PackageInfo $packageRoot
         }
 
         if($installArgs.migrate){
-            Run-Closure $installArgs.migrate $config
+            Run-Closure $installArgs.migrate $config | Out-Default
         } else{
             throw "Please specify migrate action in installArgs as closure. "
         }
@@ -48,5 +48,9 @@ $packageInfo = Get-PackageInfo $packageRoot
                 Grant-DBAccess $config.server $config.dbName "$($_.prefix)\$($_.name)"
             }
         }
+        @{
+            'server' = $config.server 
+            'dbName' = $config.dbName
+        }        
     }
 }

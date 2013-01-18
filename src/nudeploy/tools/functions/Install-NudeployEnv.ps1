@@ -7,8 +7,7 @@ Function Install-NuDeployEnv{
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
     Prepare-AllNodes $envConfig | Out-Null
-    Deploy-AllApps $envConfig | Out-Null
-    ,$envConfig.apps
+    $envConfig.apps | % { Deploy-App $_ $envConfig }
 }
 
 Function Get-EnvConfigFilePath($envPath){
@@ -147,15 +146,12 @@ Function Prepre-NudeploySource($nugetRepo) {
     }
 }
 
-Function Deploy-AllApps($envConfig){
-    $envConfig.apps | % { Deploy-App $_ $envConfig }
-}
 Function Deploy-App ($appConfig, $envConfig) {
     $appConfig.env = $envConfig.variables.ENV
     $features = $appConfig.features
     $forceRedeploy = $features -contains "forceRedeploy"
 
-    Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig $forceRedeploy {
+    $appConfig.deployResult = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy {
         $nugetRepo = $envConfig.nugetRepo
         $nodeDeployRoot = $envConfig.nodeDeployRoot 
 
@@ -167,8 +163,9 @@ Function Deploy-App ($appConfig, $envConfig) {
             $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
 
             Import-Module $nudeployModule.FullName -Force
-            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features        
+            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features
 
         } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $packageConfig, $features
     }
+    $appConfig
 }

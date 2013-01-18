@@ -31,7 +31,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
         }
 
         $tempDir = "$($env:temp)\$((Get-Date).Ticks)"
-        New-Item $tempDir -type Directory | Out-Null
+        New-Item $tempDir -type Directory | Out-Default
         Set-ItemProperty $webSitePath physicalPath $tempDir
         Write-Host "Website [$webSiteName] is ready."
         SLEEP -second 2
@@ -43,6 +43,18 @@ $packageInfo.Add("sourcePath", $sourcePath)
         Set-ItemProperty $webSitePath physicalPath $physicalPath
         Start-Website $webSiteName
         SLEEP -second 2
-        Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+        Remove-Item $tempDir -Force -Recurse -ErrorAction SilentlyContinue | Out-Default
+
+        $website = Get-Item $webSitePath
+
+        @{
+            "name" = $website.Name
+            "bindings" = $website.bindings.collection | % {
+                @{
+                    'protocol' = $_.protocol, 
+                    'bindingInformation' = $_.bindingInformation, 
+                }
+            }
+        }
     }
 }

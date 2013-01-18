@@ -67,6 +67,7 @@ Describe "Install-NudeployEnv" {
     $envConfigFile = "$fixtures\config\env.config.ps1"
 
     Function Assert-GeneratedConfigFile($deploymentConfigFile){
+        $deploymentConfigFile.should.exist()
         $config = Import-Config $deploymentConfigFile
         $config.Count.should.be(9)
         $config.DatabaseName.should.be("MyTaxes-int")
@@ -85,7 +86,7 @@ Describe "Install-NudeployEnv" {
         ReImport-NudeployModule
         Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
 
-        $appsConfig = Install-NudeployEnv $envConfigFile
+        [object[]]$appsConfig = Install-NudeployEnv $envConfigFile
         
         $appsConfig.Count.should.be(1)
         $app = $appsConfig[0]
@@ -93,6 +94,7 @@ Describe "Install-NudeployEnv" {
         $app.version = '1.0'
 
         Assert-PackageInstalled $envConfigFile "Test.Package" "1.0" {
+            param($packageRoot)
             Assert-GeneratedConfigFile "$packageRoot\deployment.config.ini"
             $features = Get-Content "$packageRoot\features.txt"
             $features.should.be("a b")
@@ -173,6 +175,7 @@ Describe "Install-NudeployEnv with spec param" {
         Install-NudeployEnv -envPath $envConfigFile -versionSpec $vesrionSpecFile -nugetRepoSource $nugetRepo
 
         Assert-PackageInstalled $envConfigFile "Test.Package" "0.9" {
+            param($packageRoot)
             $config = Import-Config "$packageRoot\deployment.config.ini"
             $config.DataSource.should.be("localhost1")
             $config.DatabaseName.should.be("MyTaxes-local1")

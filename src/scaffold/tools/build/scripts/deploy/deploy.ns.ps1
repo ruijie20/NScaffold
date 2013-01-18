@@ -47,10 +47,10 @@ if($PsCmdlet.ParameterSetName -eq 'configFile') {
 }
 
 if($applyConfig){
-    & $applyConfig $config $packageInfo
+    & $applyConfig $config $packageInfo | Out-Default
 }
 
-$installClosure = {& $defaultFeature.installAction $config, $packageInfo, $installArgs}.GetNewClosure()
+$installClosure = Make-Closure $defaultFeature.installAction $config, $packageInfo, $installArgs
 foreach ($feature in $features){
     if(Test-Path "$featuresFolder\$feature.ps1"){
         $featureScript = "$featuresFolder\$feature.ps1"
@@ -58,8 +58,11 @@ foreach ($feature in $features){
         $featureScript = "$featuresFolder\$feature.ns.ps1"
     }
     if($featureScript){
-        $installClosure = {& $featureScript $config $packageInfo $installArgs $installClosure}.GetNewClosure()
+        $installClosure = Make-Closure { 
+            param($scriptFile, $c)
+            & "$scriptFile" $config $packageInfo $installArgs {Run-Closure $c}
+        } "$featureScript", $installClosure
     }
 }
 
-& $installClosure
+Run-Closure $installClosure

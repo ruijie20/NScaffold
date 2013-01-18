@@ -46,5 +46,3 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     }
     $packageDir
 }
-
-

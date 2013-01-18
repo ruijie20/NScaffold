@@ -23,23 +23,20 @@ Describe "Install-NuDeployPackage" {
     & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
 
     It "should deploy the package and run install.ps1." {
-        $packageRoot = Install-NuDeployPackage -packageId $packageName -source $nugetRepo -workingDir $workingDir
-        write-host $packageRoot -f yellow
+        Install-NuDeployPackage -packageId $packageName -source $nugetRepo -workingDir $workingDir
         $packageVersion = "1.0"
-        $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
+        $packageRoot = "$workingDir\$packageName.$packageVersion"
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
         $config = Import-Config $deploymentConfigFile
         $config.DatabaseName.should.be("MyTaxes-local")
-
         "$packageRoot\features.txt".should.exist()
         (Get-Content "$packageRoot\features.txt").should.be("default")
     }
 
     It "should deploy the latest package all spec." {
         $features = @("renew", "load-balancer")
-        $packageRoot = Install-NuDeployPackage -packageId $packageName -version 0.9  -source $nugetRepo -workingDir $workingDir -config $configFile -features $features
-        $packageVersion = "0.9"
-        $packageRoot.should.be("$workingDir\$packageName.$packageVersion") 
+        Install-NuDeployPackage -packageId $packageName -version 0.9  -source $nugetRepo -workingDir $workingDir -config $configFile -features $features
+        $packageRoot = "$workingDir\$packageName.0.9"
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
         $config = Import-Config $deploymentConfigFile
 		$config.DatabaseName.should.be("[MyTaxesDatabaseName]-[ENV]")
@@ -48,9 +45,9 @@ Describe "Install-NuDeployPackage" {
 
     It "should deploy the package and ignore install.ps1." {
         & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.1 -o $nugetRepo
-        $packageRoot = Install-NuDeployPackage -packageId $packageName -source $nugetRepo -workingDir $workingDir -ignoreInstall
+        Install-NuDeployPackage -packageId $packageName -source $nugetRepo -workingDir $workingDir -ignoreInstall
         $packageVersion = "1.1"
-        $packageRoot.should.be("$workingDir\$packageName.$packageVersion")
+        $packageRoot = "$workingDir\$packageName.$packageVersion"
         $installResultFile = "$packageRoot\deployment.config.ini"
         (Test-Path $installResultFile).should.be($False)
     }
@@ -59,9 +56,6 @@ Describe "Install-NuDeployPackage" {
         Add-Content "$fixtures\package_source\config.ini" -value "`nExtraConfig = whatever"
         Get-Content "$fixtures\package_source\config.ini" | write-host -f yellow
         & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.2 -o $nugetRepo
-
-        $packageRoot = Install-NuDeployPackage -packageId $packageName -version 1.2 -source $nugetRepo -workingDir $workingDir -config $configFile    
-        $packageVersion = "1.2"
-        $packageRoot.should.be("$workingDir\$packageName.$packageVersion")
+        Install-NuDeployPackage -packageId $packageName -version 1.2 -source $nugetRepo -workingDir $workingDir -config $configFile    
     }
 }

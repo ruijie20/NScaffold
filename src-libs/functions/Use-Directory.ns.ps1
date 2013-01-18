@@ -9,6 +9,5 @@ Function Use-Directory ($dir, [ScriptBlock]$action){
     } 
     finally{
         Pop-Location
-    }
-    
+    }    
 }
