@@ -7,7 +7,7 @@ Function Invoke-SqlScript {
 	$variables.GetEnumerator() | sort-object -Property Name | % {
 		$commandLine += " -v $($_.Key) = `"$($_.Value)`""
 	}
-	Invoke-Expression $commandLine
+	Invoke-Expression $commandLine | Out-Default
 	if ($LASTEXITCODE -ne 0) {
 	    throw "Error when exec sql command `n$commandLine"
 	}
@@ -87,7 +87,7 @@ Function Invoke-SqlCommand {
 
 	$commandLine = "sqlcmd -E -S $server -d $database -Q `"$command`""
 	
-	Invoke-Expression $commandLine
+	Invoke-Expression $commandLine | Out-Default
 	if ($LASTEXITCODE -ne 0) {
 	    throw "Error when exec sql command `n$commandLine"
 	}
