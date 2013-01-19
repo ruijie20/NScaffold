@@ -40,7 +40,7 @@ PS-Get "psake" "4.2.0.1" | % {
     $psake.use_exit_on_error = $true
 }
 
-PS-Get "NScaffold.NuDeploy" "0.0.100" | % {
+PS-Get "NScaffold.NuDeploy" "0.0.105" | % {
     $nudeployModule = Get-ChildItem $_ nudeploy.psm1 -recurse
     Import-Module $nudeployModule.FullName -Force
 }
