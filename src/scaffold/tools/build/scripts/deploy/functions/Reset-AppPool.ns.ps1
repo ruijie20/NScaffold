@@ -1,7 +1,7 @@
 Function Reset-AppPool($appPoolName, $username, $password){
     $appPoolPath = "IIS:\AppPools\$appPoolName"
     if (-not (Test-Path $appPoolPath)) {
-        $appPool = New-WebAppPool $appPoolName        
+        $appPool = New-WebAppPool $appPoolName
     }
 
     if (-not $username) {

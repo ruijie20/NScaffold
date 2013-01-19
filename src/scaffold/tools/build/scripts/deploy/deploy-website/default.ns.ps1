@@ -37,7 +37,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
         SLEEP -second 2
 
         if($sourcePath -ne $physicalPath){
-            Clear-Directory $physicalPath
+            Clear-Directory $physicalPath | Out-Null
             Copy-Item "$sourcePath\*" -Destination $physicalPath -Recurse
         }    
         Set-ItemProperty $webSitePath physicalPath $physicalPath

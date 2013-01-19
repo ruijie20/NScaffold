@@ -99,10 +99,11 @@ Task Deploy -description "Download from nuget server and install"{
         exec {
             $version = $pkgs[$_]
             if ($features -eq $null) {
-                Install-NuDeployPackage $_ -version $version -s $packageSettings.pullRepo -working $packageSettings.installDir -Force
+                $result = Install-NuDeployPackage $_ -version $version -s $packageSettings.pullRepo -working $packageSettings.installDir -Force
             } else{
-                Install-NuDeployPackage $_ -version $version -s $packageSettings.pullRepo -working $packageSettings.installDir -Force -features $features                
-            }            
+                $result = Install-NuDeployPackage $_ -version $version -s $packageSettings.pullRepo -working $packageSettings.installDir -Force -features $features                
+            }
+            $result | Out-String | write-host -f green
         }
     }    
 }
