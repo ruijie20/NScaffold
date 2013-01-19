@@ -51,8 +51,8 @@ $packageInfo.Add("sourcePath", $sourcePath)
             "name" = $website.Name
             "bindings" = $website.bindings.collection | % {
                 @{
-                    'protocol' = $_.protocol, 
-                    'bindingInformation' = $_.bindingInformation, 
+                    'protocol' = $_.protocol
+                    'bindingInformation' = $_.bindingInformation
                 }
             }
         }
