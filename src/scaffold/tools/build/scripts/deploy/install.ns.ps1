@@ -18,7 +18,7 @@ if (-not $configFile) {
     $configFile = "$packageRoot\config.ini"
 }
 
-$packageConfig = & "$packageRoot\tools\packageConfig.ps1"
+$packageConfig = & "$packageRoot\tools\packageConfig.ps1" $packageRoot
 if ($features -eq $null) {
     $features = $packageConfig.defaultFeatures
 }
