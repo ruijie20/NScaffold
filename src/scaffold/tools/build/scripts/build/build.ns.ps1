@@ -50,12 +50,12 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     $version = $packageSettings.version
     $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId
 
-    #default profile
-    Use-Directory $packageOutputDir {
-        $nodes | ? {-not $_.profile} |
-            % {
-                exec {&$nuget pack $_.spec.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
-            }
+    #default profile    
+    $nodes | ? {-not $_.profile} | % {
+        New-PackageWithSpec $_.spec $_.type {
+            param($spec)
+            exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }
+        }
     }
 
     # others
@@ -68,10 +68,10 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         Clean-Projects $dirs
         Set-Location $codebaseRoot        
         exec {&$yam build $projects -runtimeProfile $profile}
-        Pop-Location
-        Use-Directory $packageOutputDir {
-            $currentNodes | % {
-                exec {&$nuget pack $_.spec.FullName -prop Configuration=$buildConfiguration -version $version -NoPackageAnalysis}
+        $currentNodes | % {            
+            New-PackageWithSpec $_.spec $_.type {
+                param($spec)
+                exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }
             }
         }
     }

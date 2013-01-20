@@ -62,6 +62,7 @@ $buildParmeters = @{
     "env" = "$env"
     "codeBaseRoot" = "$codeBaseRoot"
     "libsRoot" = "$libsRoot"
+    "scriptRoot" = $scriptRoot
     "toolsRoot" = "$toolsRoot"
     "nuget" = $nuget
     "environmentsRoot" = "$buildScriptRoot\environments"

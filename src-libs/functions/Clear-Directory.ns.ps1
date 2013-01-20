@@ -3,6 +3,6 @@ Function Clear-Directory($dir){
         Remove-Item "$dir\*" -Recurse -Force
         Get-Item $dir
     } else {
-        New-Item $dir -Type Directory
+        New-Item $dir -Type Directory | Out-Null
     }
 }

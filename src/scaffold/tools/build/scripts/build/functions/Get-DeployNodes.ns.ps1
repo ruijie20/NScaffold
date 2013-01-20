@@ -8,6 +8,7 @@ Function Get-DeployNodes ($dirs, [string[]]$packageIds){
             'spec' = $_
             'project' = $prj
             'profile' = $packageConfig.profile
+            'type' = $packageConfig.type
         }
     } 
     if ($packageIds) {
