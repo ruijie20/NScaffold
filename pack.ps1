@@ -4,6 +4,7 @@ if(test-path .\tmp\pkgs\){
 } else {
 	mkdir .\tmp\pkgs\
 }
+.\tools\nuget\NuGet.exe update -self
 
 .\tools\nuget\NuGet.exe pack .\src\ns-install\nscaffold.nuspec -NoPackageAnalysis -o $dir
 .\tools\nuget\NuGet.exe pack .\src\scaffold\nscaffold.scaffold.nuspec -NoPackageAnalysis -o $dir
