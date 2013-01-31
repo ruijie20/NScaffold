@@ -6,10 +6,10 @@ Function Verify-Config($config, $refConfig){
     $outdated = $configTable.Keys | ? { -not $refConfigTable.ContainsKey($_) }
 
     if ($outdated) {
-        Write-Warning "Outdated configuration for $outdated. "
+        Write-Warning "Outdated configuration for $outdated."
     }
 
     if ($missing) {
-        Write-Warning "Missing configuration for $missing. "
+        throw "Missing configuration for $missing."
     }
 }

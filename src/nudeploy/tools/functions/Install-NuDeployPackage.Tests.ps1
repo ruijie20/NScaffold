@@ -52,10 +52,16 @@ Describe "Install-NuDeployPackage" {
         (Test-Path $installResultFile).should.be($False)
     }
 
-    It "should deploy success if specified config file is missing or outdated" {
+    It "should throw exception if specified config file is missing" {
         Add-Content "$fixtures\package_source\config.ini" -value "`nExtraConfig = whatever"
         Get-Content "$fixtures\package_source\config.ini" | write-host -f yellow
         & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.2 -o $nugetRepo
-        Install-NuDeployPackage -packageId $packageName -version 1.2 -source $nugetRepo -workingDir $workingDir -config $configFile    
+        try{
+            Install-NuDeployPackage -packageId $packageName -version 1.2 -source $nugetRepo -workingDir $workingDir -config $configFile    
+            throw "should not be here"
+        }catch{
+            $_.toString().should.be("Missing configuration for ExtraConfig.")
+        }
+        
     }
 }

@@ -101,6 +101,20 @@ Describe "Install-NudeployEnv" {
         }
     }
 
+    It "should stop deployment when exception is thrown when config miss item" {
+        $envConfigFile = "$fixtures\config_miss_config_item\env.config.ps1"
+        Setup-ConfigFixtures
+        ReImport-NudeployModule
+        Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
+
+        try{
+            Install-NudeployEnv $envConfigFile
+            throw "should not be here"
+        }catch{
+            $_.toString().should.be("Missing configuration for PhysicalPath.")
+        }
+    }
+
     It "should not deploy packages that have been deployed" {
         Setup-ConfigFixtures
         ReImport-NudeployModule
