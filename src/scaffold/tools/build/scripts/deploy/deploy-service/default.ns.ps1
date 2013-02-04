@@ -5,12 +5,12 @@ $exeFile = Get-ChildItem $packageRoot -Recurse -Filter "$executablePath" | selec
 $sourcePath = Split-Path $exeFile.FullName -Parent
 $packageInfo = Get-PackageInfo $packageRoot
 $packageInfo.Add("sourcePath", $sourcePath)
-$retryCount = 60
-$retryIntervalInSec = 1
 @{
     'packageInfo' = $packageInfo
     'installAction' = {
         param($config, $packageInfo, $installArgs)
+        $retryCount = 60
+        $retryIntervalInSec = 1
         $sourcePath = $packageInfo.sourcePath
         $executablePath = $installArgs.executablePath
         $name = $config.ServiceName
