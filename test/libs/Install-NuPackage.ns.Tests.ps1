@@ -1,14 +1,14 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = "$here\..\.."
 $nugetExe = "$root\tools\nuget\NuGet.exe"
-$fixturesTemplate = "$root\test\config-fixtures"
-$fixtures = "$TestDrive\config-fixtures"
+$fixturesTemplate = "$root\test\test-fixtures"
+$fixtures = "$TestDrive\test-fixtures"
 $nugetRepo = "$fixtures\nugetRepo"
 $packageName = "Test.Package"
 
 $workingDir = "$TestDrive\deployment_package"
 
-. "$here\Install-NuPackage.ns.ps1"
+. "$root\src-libs\functions\Install-NuPackage.ns.ps1"
 
 Describe "Install-NuPackage" {
     

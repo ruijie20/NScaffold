@@ -1,4 +1,4 @@
-param($pathPatten='.\src*')
+param($pathPatten='.\test*')
 $rootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 trap {

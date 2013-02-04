@@ -1,7 +1,8 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-. "$here\Skip-IfAlreadyDeployed.ps1"
-. "$here\Test-ConfigFileEqual.ps1"
-. "$here\..\..\..\..\src-libs\functions\Import-Config.ns.ps1"
+$root = "$here\..\.."
+. "$root\src\nudeploy\tools\functions\Skip-IfAlreadyDeployed.ps1"
+. "$root\src\nudeploy\tools\functions\Test-ConfigFileEqual.ps1"
+. "$root\src-libs\functions\Import-Config.ns.ps1"
 
 Function New-TempFile($config){
     $timestamp = (Get-Date).Ticks

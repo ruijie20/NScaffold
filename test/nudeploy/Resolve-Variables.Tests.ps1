@@ -1,7 +1,7 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
-. "$here\$sut"
-$root = "$here\..\..\..\.."
+$root = "$here\..\.."
+
+. "$root\src\nudeploy\tools\functions\Resolve-Variables.ps1"
 . "$root\src-libs\functions\Merge-Hashtable.ns.ps1"
 
 Describe "Resolve-Varialbes" {
