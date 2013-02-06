@@ -1,8 +1,16 @@
 Function Get-DeployNodes ($dirs, [string[]]$packageIds){
     $nodes = $dirs | Get-ChildItem -include *.nuspec -Recurse | % { 
-        $packageId = Get-PackageId $_
-        $packageConfig = Get-PackageConfig $_
-        $prj = Get-ChildItem $_.Directory -filter *.csproj
+        $specPath = $_
+        $packageId = Get-PackageId $specPath
+        $packageConfig = Get-PackageConfig $specPath
+        $prj = (Get-ChildItem $specPath.Directory -filter *.csproj).FullName
+        $compileTargets = $packageConfig.compileTargets
+
+        if( $compileTargets){
+            $prj = $compileTargets | %{ 
+                Join-Path $specPath.Directory $_
+            }
+        }
         @{
             'id' = $packageId
             'spec' = $_

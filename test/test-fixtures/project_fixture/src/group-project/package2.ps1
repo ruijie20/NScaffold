@@ -1,0 +1,5 @@
+param($packageRoot)
+
+@{
+    'profile' = 'Group'
+}

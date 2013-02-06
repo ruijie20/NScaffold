@@ -38,10 +38,11 @@ Task Clean -description "clear all bin and obj under project directories (with e
 
 # only compile the default profile nodes
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
-    $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId    
-    $projects = $nodes | ? {-not $_.profile -and $_.project} | % { $_.project.FullName }
     Set-Location $codebaseRoot
-    exec {&$yam build $projects}
+    $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId    
+    $nodes | ? {-not $_.profile -and $_.project} | % { $_.project } | % {
+        exec {&$yam build $_}
+    }
     Pop-Location
 }
 
@@ -63,8 +64,8 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         $profile = $_.Name
         $currentNodes = $_.Group
         $compileProjects = $currentNodes | ? {$_.project}
-        $dirs = $compileProjects | % { $_.project.Directory.FullName }
-        $projects = $compileProjects | % { $_.project.FullName }
+        $dirs = $compileProjects | % { Split-Path $_.project -Parent }
+        $projects = $compileProjects | % { $_.project }
         Clean-Projects $dirs
         Set-Location $codebaseRoot        
         exec {&$yam build $projects -runtimeProfile $profile}
