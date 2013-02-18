@@ -1,3 +1,10 @@
+Function Sync-Write-Host {
+    PROCESS {
+         Write-Host $_
+         $_
+    }
+}
+
 Function Install-NuDeployPackage(){
     [CmdletBinding(DefaultParameterSetName="configFile")]   
     param(
@@ -47,7 +54,7 @@ Function Install-NuDeployPackage(){
             if(-not($LastExitCode -eq 0)){
                 throw "install.ps1 end with exit code: $Lastexitcode"
             }
-        }         
+        } | Sync-Write-Host         
     }
     if($PsCmdlet.ParameterSetName -eq 'configObject') {
         Remove-Item $config -Force -ea SilentlyContinue
