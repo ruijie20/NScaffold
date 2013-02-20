@@ -40,8 +40,8 @@ Task Clean -description "clear all bin and obj under project directories (with e
 Task Compile -depends Clean -description "Compile all deploy nodes, need yam configured" {
     Set-Location $codebaseRoot
     $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId    
-    $nodes | ? {-not $_.profile -and $_.project} | % { $_.project } | % {
-        exec {&$yam build $_}
+    $nodes | ? {-not $_.profile -and $_.project} | % {
+        exec {&$yam build $_.project}
     }
     Pop-Location
 }
