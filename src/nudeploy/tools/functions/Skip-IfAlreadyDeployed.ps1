@@ -2,7 +2,12 @@ Function Skip-IfAlreadyDeployed ($root, $appConfig, [switch]$force, $scriptBlock
     New-Item -itemtype directory $root -Force | Out-Null
     Function Register-SuccessDeployment($deployResult) {
         Remove-PreviousDeployment $root $appConfig.env $appConfig.server $appConfig.package
-        Export-Clixml $lastDeploymentResult -InputObject $deployResult
+        try {
+            Export-Clixml $lastDeploymentResult -InputObject $deployResult    
+        } catch {
+            Write-Warning $_
+        }
+        
         Copy-Item -Path $appConfig.config -Destination $lastDeploymentConfig
     }
 
