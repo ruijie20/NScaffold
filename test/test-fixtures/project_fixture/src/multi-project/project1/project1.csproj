@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{A939B1BD-F411-4004-921D-A990524ADC6C}</ProjectGuid>
+    <ProjectGuid>{ED1BDFEE-FCEC-4FF2-9507-1192C82DB756}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Multi.Project1</RootNamespace>
