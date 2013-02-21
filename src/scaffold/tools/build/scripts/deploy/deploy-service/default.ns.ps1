@@ -10,7 +10,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
     'installAction' = {
         param($config, $packageInfo, $installArgs)
         $retryCount = 60
-        $retryIntervalInSec = 1
+        $retryIntervalInSec = 10
         $sourcePath = $packageInfo.sourcePath
         $executablePath = $installArgs.executablePath
         $name = $config.ServiceName
