@@ -22,13 +22,12 @@ Function Get-HealthCheckUrl(){
     "$($protocol)://$($hostName):$port$healthCheckPath"
 }
 
-$healthCheckUrl = Get-HealthCheckUrl
-
 Function Match-WebsiteWithPackage(){
     Write-Host "Source Package [ $($packageInfo.packageId) : $($packageInfo.version) ]"
     if(-not(Test-Path $webSitePath)) {
         $false
     } else {
+        $healthCheckUrl = Get-HealthCheckUrl
         Write-Host "Target HealthCheckUrl: [$healthCheckUrl]"
         $healthCheckPage = Get-HealthCheckPage $healthCheckUrl
         Write-Host "HealthCheckPage `n$healthCheckPage"
@@ -37,7 +36,7 @@ Function Match-WebsiteWithPackage(){
         if(-not $match){
             $false
         } else {
-            if($healthCheckPage -match ".+=Failure\s*`$") {
+            if($healthCheckPage -match ".+=Failure\s*") {
                 Write-Warning "Health page reported there are some failures after the deployment!"
             }
             $true
@@ -48,6 +47,7 @@ Function Match-WebsiteWithPackage(){
 Function Get-HealthCheckPage(){
     Skip-HTTSCertValidation
     Redo-OnException -RetryCount 3 -SleepSecond 3 -RedoActionScriptBlock {
+        $healthCheckUrl = Get-HealthCheckUrl
         (New-Object System.Net.WebClient).DownloadString($healthCheckUrl)
     }
 }
