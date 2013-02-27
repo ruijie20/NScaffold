@@ -95,7 +95,9 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion
 
     Run-RemoteScript $server {
         param($nodeDeployRoot)
-        Remove-Item $nodeDeployRoot -r -Force 
+        if(Test-Path $nodeDeployRoot){
+            Remove-Item $nodeDeployRoot -r -Force 
+        }
         New-Item $nodeDeployRoot -type directory 
         New-Item "$nodeDeployRoot\tools" -type directory
         New-Item "$nodeDeployRoot\nupkgs" -type directory
