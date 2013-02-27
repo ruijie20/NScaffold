@@ -82,7 +82,7 @@ Function Assert-AppConfigs($envConfig) {
 }
 
 Function Prepare-AllNodes($envConfig){
-    $targetNodes = $envConfig.apps | % { $_.server } | Get-Unique
+    $targetNodes = $envConfig.apps | % { $_.server } | Sort | Get-Unique
     Add-HostAsTrusted $targetNodes
     $targetNodes | % { Prepare-Node $_ $envConfig.nugetRepo $envConfig.nodeDeployRoot $envConfig.nodeNuDeployVersion} | out-null
     
