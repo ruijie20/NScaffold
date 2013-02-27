@@ -9,13 +9,17 @@ Function Get-HealthCheckUrl(){
     $protocol = $firstBinding.protocol
     $bindingInformation = $firstBinding.bindingInformation
     $ip, $port, $hostName = $bindingInformation -split ':'
-    if($ip -eq "*"){
-        $ip = 'localhost'
+    if(-not($hostName)){
+        if($ip -eq "*"){
+            $hostName = 'localhost'
+        }else{
+            $hostName = $ip
+        }
+        if(-not $healthCheckPath){
+            $healthCheckPath = "/health?check=all"
+        }
     }
-    if(-not $healthCheckPath){
-        $healthCheckPath = "/health?check=all"
-    }
-    "$($protocol)://$($ip):$port$healthCheckPath"
+    "$($protocol)://$($hostName):$port$healthCheckPath"
 }
 
 $healthCheckUrl = Get-HealthCheckUrl
