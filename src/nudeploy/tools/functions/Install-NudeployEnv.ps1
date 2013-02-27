@@ -6,7 +6,7 @@ Function Install-NuDeployEnv{
        [string] $nugetExeUrl
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
-    Prepare-AllNodes $envConfig | Out-Null
+    Prepare-AllNodes $envConfig | Out-Default
     $envConfig.apps | % { Deploy-App $_ $envConfig }
 }
 
@@ -84,11 +84,11 @@ Function Assert-AppConfigs($envConfig) {
 Function Prepare-AllNodes($envConfig){
     $targetNodes = $envConfig.apps | % { $_.server } | Sort | Get-Unique
     Add-HostAsTrusted $targetNodes
-    $targetNodes | % { Prepare-Node $_ $envConfig.nugetRepo $envConfig.nodeDeployRoot $envConfig.nodeNuDeployVersion} | out-null
+    $targetNodes | % { Prepare-Node $_ $envConfig.nugetRepo $envConfig.nodeDeployRoot $envConfig.nodeNuDeployVersion} | Out-Default
     
 }
 Function Add-HostAsTrusted($targetNodes) {
-    winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Null
+    winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Default
 }
 Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion){
     Write-Host "Preparing to deploy on node [$server]...." -f cyan
@@ -99,17 +99,17 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion
         New-Item $nodeDeployRoot -type directory -ErrorAction silentlycontinue
         New-Item "$nodeDeployRoot\tools" -type directory -ErrorAction silentlycontinue
         New-Item "$nodeDeployRoot\nupkgs" -type directory -ErrorAction silentlycontinue
-    } -argumentList $nodeDeployRoot | out-null
+    } -argumentList $nodeDeployRoot | out-Default
 
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     if(-not $nugetExeUrl){
-        Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-null
+        Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-Default
     } else {
         Run-RemoteScript $server {
             param($nugetExeUrl, $nodeDeployRoot)
             $webClient = new-object System.Net.WebClient
             $webClient.DownloadFile($nugetExeUrl, "$nodeDeployRoot\tools\nuget.exe")
-        } -argumentList $nugetExeUrl, $nodeDeployRoot | out-null        
+        } -argumentList $nugetExeUrl, $nodeDeployRoot | out-Default        
     }    
 
     $nuDeployPackageId = 'NScaffold.NuDeploy'
@@ -128,7 +128,7 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion
             throw "Setup nuDeployPackage failed"
         }
         Pop-Location
-    } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-null
+    } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-Default
     Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
 }
 Function Prepre-NudeploySource($nugetRepo) {
@@ -139,7 +139,7 @@ Function Prepre-NudeploySource($nugetRepo) {
 
     if(-not $isNudeployInRepo){
         $nupkg = Get-Item "$PSScriptRoot\..\*.nupkg"
-        Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\nupkgs\$($nupkg.Name)" | out-null
+        Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\nupkgs\$($nupkg.Name)" | out-Default
         "$nodeDeployRoot\nupkgs\"
     } else {
         $nugetRepo  
