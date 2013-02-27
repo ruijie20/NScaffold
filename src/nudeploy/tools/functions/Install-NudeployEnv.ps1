@@ -95,10 +95,10 @@ Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion
 
     Run-RemoteScript $server {
         param($nodeDeployRoot)
-        Remove-Item $nodeDeployRoot -r -Force -ErrorAction silentlycontinue
-        New-Item $nodeDeployRoot -type directory -ErrorAction silentlycontinue
-        New-Item "$nodeDeployRoot\tools" -type directory -ErrorAction silentlycontinue
-        New-Item "$nodeDeployRoot\nupkgs" -type directory -ErrorAction silentlycontinue
+        Remove-Item $nodeDeployRoot -r -Force 
+        New-Item $nodeDeployRoot -type directory 
+        New-Item "$nodeDeployRoot\tools" -type directory
+        New-Item "$nodeDeployRoot\nupkgs" -type directory
     } -argumentList $nodeDeployRoot | out-Default
 
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
