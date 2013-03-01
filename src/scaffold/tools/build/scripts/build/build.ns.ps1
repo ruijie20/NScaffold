@@ -47,9 +47,20 @@ Task Compile -depends Clean -description "Compile all deploy nodes, need yam con
 
 Task Package -depends Compile -description "Compile, package and push to nuget server if there's one"{
     Clear-Directory $packageOutputDir
+    $commitVersionPath = "$root\commit-version.txt"
+    if(Test-Path $commitVersionPath){
+        Remove-Item $commitVersionPath        
+    }
+    exec{
+        if($codebaseConfig.SCM -eq "Git"){
+            $commitVersion = & git log --reverse -1 --format=%H
+            Write-ToFile $commitVersionPath "$commitVersion"   
+        }    
+    }
+
     $version = $packageSettings.version
     $nodes = Get-DeployNodes $codebaseConfig.projectDirs $packageId
-
+    
     #default profile    
     $nodes | ? {-not $_.profile} | % {
         New-PackageWithSpec $_.spec $_.type {

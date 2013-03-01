@@ -20,6 +20,10 @@ Function New-PackageWithSpec($templateSpecFile, $type, $packAction) {
         Append-FileNode "$relativeScriptRoot\deploy\deploy.ns.ps1" "tools\"
         Append-FileNode "$relativeScriptRoot\deploy\install.ns.ps1" "install.ps1"
         Append-FileNode "$($templateSpecFile.BaseName).ps1" "tools\packageConfig.ps1"
+        $commitVersionPath = "$relativeScriptRoot\build\commit-version.txt"
+        if(Test-Path $commitVersionPath) {
+            Append-FileNode $commitVersionPath "commit-version.txt"
+        }
         $specXml.Save($fullSpecFile)
     }
     try {
