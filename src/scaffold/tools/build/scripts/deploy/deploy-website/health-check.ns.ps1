@@ -5,6 +5,6 @@ $here = $MyInvocation.MyCommand.Path | Split-Path -Parent
 
 & $installAction
 
-if(-not (Test-WebsiteMatch $config)){
-    throw "Site [$($config.siteName)] doesn't match package [$($packageInfo.packageId)]"
+if(-not (Test-WebsiteMatch $config $packageInfo)){
+    throw "Site [$($config.siteName)] doesn't match package [$($packageInfo.packageId) $($packageInfo.version)]"
 }
