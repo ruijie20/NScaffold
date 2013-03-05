@@ -17,6 +17,7 @@ try{
     & $installAction
     Add-ToLoadBalancer $websiteName
     Assert-AddedToLoadBalancer $websiteName
+    Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to pick up website[$websiteName]..."
 }catch{
     Write-Warning "Some error occured during the deployment, the website [$websiteName] is left out of loadbalancer."
     throw $_
