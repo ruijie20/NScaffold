@@ -12,6 +12,7 @@ $configFile = "$fixtures\config\app-configs\Test.Package.ini"
 . "$root\src-libs\functions\Import-Config.ns.ps1"
 
 Describe "Install-NuDeployPackage" {
+    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
     Copy-Item $fixturesTemplate $fixtures -Recurse
 
     & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -o $nugetRepo

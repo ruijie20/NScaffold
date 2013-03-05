@@ -11,7 +11,7 @@ Function Test-DependencyFailure($healthCheckPage){
     $healthCheckPage -match ".+=Failure\s*"
 }
 Function Test-MatchPackage($healthCheckPage, $config){
-    $artifactMatch = $healthCheckPage -match "Name=$($config.id)\W"
+    $artifactMatch = $healthCheckPage -match "Name=$($config.packageId)\W"
     $versionMatch = $healthCheckPage -match "Version=$($config.version)\W"
     if(-not ($artifactMatch -and $versionMatch)){
         $false
@@ -23,7 +23,7 @@ Function Test-MatchPackage($healthCheckPage, $config){
     }
 }
 Function Test-WebsiteMatch($config){
-    Write-Host "Source Package [ $($config.id) : $($config.version) ]"
+    Write-Host "Source Package [ $($config.packageId) : $($config.version) ]"
     $webSiteName = $config.siteName
     $healthCheckPath = $config.healthCheckPath
     if(-not(Test-SiteExisted $webSiteName)) {

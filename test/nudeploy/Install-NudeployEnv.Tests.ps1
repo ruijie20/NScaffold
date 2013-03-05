@@ -1,5 +1,5 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$root = "$here\..\.."
+$root = resolve-path "$here\..\.."
 $nugetExe = "$root\tools\nuget\NuGet.exe"
 $fixturesTemplate = "$root\test\test-fixtures"
 $fixtures = "$TestDrive\test-fixtures"
@@ -31,13 +31,18 @@ Function ReImport-NudeployModule(){
     Import-NudeployModule $nuDeployPackageName
 }
 Function Reset-Folder($folder){
-    Remove-Item -Force -Recurse $folder -ErrorAction SilentlyContinue |Out-Null
+    Remove-Item -Force -Recurse $folder -ErrorAction SilentlyContinue 
+    while(Test-Path $folder){
+        sleep 2
+        write-host "trying Reset-Folder $folder"
+        Remove-Item -Force -Recurse $folder -ErrorAction SilentlyContinue 
+    }
     New-Item $folder -type directory
 }
 Function Setup-ConfigFixtures(){
     Reset-Folder $nugetRepo
     Reset-Folder $workingDir
-    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
+    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue
     Copy-Item $fixturesTemplate $fixtures -Recurse
 }
 Function Assert-PackageInstalled($envConfigFile, $package, $version, $script){

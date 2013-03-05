@@ -8,6 +8,8 @@ $workingDir = "$fixtures\workingDir"
 $nuDeployPackageName = "NScaffold.NuDeploy"
 
 Describe "nudeploy.psm1" {
+
+    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
     Copy-Item $fixturesTemplate $fixtures -Recurse
 
     & $nugetExe pack "$root\src\nudeploy\nscaffold.nudeploy.nuspec" -NoPackageAnalysis -o $nugetRepo

@@ -8,6 +8,8 @@ $projectDir = "$fixtures\project_fixture"
 . "$root\src\scaffold\tools\build\scripts\build\functions\Get-PackageConfig.ns.ps1"
 
 Describe "Get-DeployNodes.Tests" {
+
+    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
     Copy-Item $fixturesTemplate $fixtures -Recurse
 
     It "should get deploy nodes for single project." {

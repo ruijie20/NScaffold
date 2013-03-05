@@ -7,7 +7,7 @@ Describe "Test-MatchPackage" {
     It "should return true when the package matches with the health check page" {
         $healthCheckPage = "Name=packageId`nVersion=1.0.0.3603931`nServerName=DEV-107`nStatus=Success"
         $packageInfo = @{
-            id = "packageId"
+            packageId = "packageId"
             version = "1.0.0.3603931"
         }
         $match = Test-MatchPackage $healthCheckPage $packageInfo
@@ -16,7 +16,7 @@ Describe "Test-MatchPackage" {
     It "should return false when the package version doesn't match with the health check page" {
         $healthCheckPage = "ServerName=DEV-107`nVersion=1.0.0.3603931`nStatus=Success"
         $packageInfo = @{
-            id = "packageId"
+            packageId = "packageId"
             version = "1.0.0.3603"
         }
         $match = Test-MatchPackage $healthCheckPage $packageInfo
@@ -25,7 +25,7 @@ Describe "Test-MatchPackage" {
     It "should return false when the package version doesn't match with the health check page 2" {
         $healthCheckPage = "ServerName=DEV-107`nVersion=1.0.0.3603931`nStatus=Success"
         $packageInfo = @{
-            id = "packageId"
+            packageId = "packageId"
             version = "1.0.0.36039311"
         }
         $match = Test-MatchPackage $healthCheckPage $packageInfo
@@ -35,7 +35,7 @@ Describe "Test-MatchPackage" {
     It "should return false when the package name doesn't match with the health check page 2" {
         $healthCheckPage = "Name=packageId1`nVersion=1.0.0.3603931`nServerName=DEV-107`nStatus=Success"
         $packageInfo = @{
-            id = "packageId"
+            packageId = "packageId"
             version = "1.0.0.3603931"
         }
         $match = Test-MatchPackage $healthCheckPage $packageInfo
@@ -76,7 +76,7 @@ Describe "Test-WebsiteMatch" {
 
             $match = Test-WebsiteMatch @{
                 siteName= $testSiteName
-                id = "TigerApi"
+                packageId = "TigerApi"
                 version = "1.0.123.0"
                 healthCheckPath = "/health.aspx?check=all"
             }
@@ -93,7 +93,7 @@ Describe "Test-WebsiteMatch" {
 
             $match = Test-WebsiteMatch @{
                 siteName= $testSiteName
-                id = "TigerApi"
+                packageId = "TigerApi"
                 version = "1.0.123.1"
                 healthCheckPath = "/health.aspx?check=all"
             }

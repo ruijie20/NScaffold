@@ -12,7 +12,8 @@ $workingDir = "$TestDrive\deployment_package"
 
 Describe "Install-NuPackage" {
     
-    Copy-Item $fixturesTemplate $fixtures -Recurse
+    Remove-Item -Force -Recurse $fixtures -ErrorAction SilentlyContinue |Out-Null
+    Copy-Item $fixturesTemplate $fixtures -Recurse -force
     & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 1.0 -o $nugetRepo
     & $nugetExe pack "$fixtures\package_source\test_package.nuspec" -NoPackageAnalysis -Version 0.9 -o $nugetRepo
 
