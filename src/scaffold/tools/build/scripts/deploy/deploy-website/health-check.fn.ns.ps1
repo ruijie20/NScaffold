@@ -10,9 +10,9 @@ Function Get-HealthCheckUrl($webSiteName, $healthCheckPath){
 Function Test-DependencyFailure($healthCheckPage){
     $healthCheckPage -match ".+=Failure\s*"
 }
-Function Test-MatchPackage($healthCheckPage, $config){
-    $artifactMatch = $healthCheckPage -match "Name=$($config.packageId)\W"
-    $versionMatch = $healthCheckPage -match "Version=$($config.version)\W"
+Function Test-MatchPackage($healthCheckPage, $packageInfo){
+    $artifactMatch = $healthCheckPage -match "Name=$($packageInfo.packageId)\W"
+    $versionMatch = $healthCheckPage -match "Version=$($packageInfo.version)\W"
     if(-not ($artifactMatch -and $versionMatch)){
         $false
     } else {
@@ -22,8 +22,8 @@ Function Test-MatchPackage($healthCheckPage, $config){
         $true
     }
 }
-Function Test-WebsiteMatch($config){
-    Write-Host "Source Package [ $($config.packageId) : $($config.version) ]"
+Function Test-WebsiteMatch($config, $packageInfo){
+    Write-Host "Source Package [ $($packageInfo.packageId) : $($packageInfo.version) ]"
     $webSiteName = $config.siteName
     $healthCheckPath = $config.healthCheckPath
     if(-not(Test-SiteExisted $webSiteName)) {
@@ -33,6 +33,6 @@ Function Test-WebsiteMatch($config){
         Write-Host "Target HealthCheckUrl: [$healthCheckUrl]"
         $healthCheckPage = Get-UrlContent $healthCheckUrl
         Write-Host "HealthCheckPage `n$healthCheckPage"
-        Test-MatchPackage $healthCheckPage $config
+        Test-MatchPackage $healthCheckPage $packageInfo
     }
 }

@@ -73,13 +73,15 @@ Describe "Test-WebsiteMatch" {
         try{
             Remove-Website -Name $testSiteName -ErrorAction SilentlyContinue
             New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath "$fixturesTemplate\healthchecksite" -Force
-
-            $match = Test-WebsiteMatch @{
+            $config = @{
                 siteName= $testSiteName
-                packageId = "TigerApi"
-                version = "1.0.123.0"
                 healthCheckPath = "/health.aspx?check=all"
             }
+            $packageInfo = @{
+                packageId = "TigerApi"
+                version = "1.0.123.0"
+            }
+            $match = Test-WebsiteMatch $config $packageInfo
 
             $match.should.be($true)
         }finally{
@@ -90,13 +92,16 @@ Describe "Test-WebsiteMatch" {
         try{
             Remove-Website -Name $testSiteName -ErrorAction SilentlyContinue
             New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath "$fixturesTemplate\healthchecksite" -Force
-
-            $match = Test-WebsiteMatch @{
+            $config = @{
                 siteName= $testSiteName
-                packageId = "TigerApi"
-                version = "1.0.123.1"
                 healthCheckPath = "/health.aspx?check=all"
             }
+            $packageInfo = @{
+                packageId = "TigerApi"
+                version = "1.0.123.1"
+            }
+            
+            $match = Test-WebsiteMatch $config $packageInfo
 
             $match.should.be($false)
         }finally{
