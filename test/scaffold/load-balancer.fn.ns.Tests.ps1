@@ -1,8 +1,11 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = "$here\..\.."
-$tmp = resolve-path "$root\tmp"
+$tmp = "$root\tmp"
+New-Item $tmp -Type Directory -ErrorAction SilentlyContinue|out-default
+$tmp = resolve-path $tmp
 $fixtures = "$TestDrive\test-fixtures"
 . "$root\src\scaffold\tools\build\scripts\deploy\deploy-website\load-balancer.fn.ns.ps1"
+
 
 Describe "Get-UrlForSite" {
     Function Cleanup($siteName){
