@@ -10,10 +10,12 @@ if(-not $loadBalancerPollingDurationInSeconds){
 }
 
 try{
-    Remove-FromLoadBalancer $websiteName
-    Assert-SuspendedFromLoadBalancer $websiteName
-    Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website[$websiteName]..."
-    Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
+    if(-not(Test-SuspendedFromLoadBalancer $websiteName)){
+        Remove-FromLoadBalancer $websiteName
+        Assert-SuspendedFromLoadBalancer $websiteName
+        Trace-ProgressMsg "Wait $loadBalancerPollingDurationInSeconds second(s) for load balancer to suspend website[$websiteName]..."
+        Start-Sleep -Seconds $loadBalancerPollingDurationInSeconds
+    }
     & $installAction
     Add-ToLoadBalancer $websiteName
     Assert-AddedToLoadBalancer $websiteName
