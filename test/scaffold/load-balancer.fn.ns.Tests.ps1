@@ -124,5 +124,10 @@ Describe "Test-SuspendedFromLoadBalancer" {
         $suspended.should.be($true)
     }
     Cleanup $siteName
+
+    It "should return true when there's no site" {
+        $suspended = Test-SuspendedFromLoadBalancer "non-exist-site"
+        $suspended.should.be($true)
+    }
 }
 
