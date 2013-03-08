@@ -34,11 +34,13 @@ $packageInfo.Add("sourcePath", $sourcePath)
         Write-Host "Start to copy $sourcePath to $installPath" -f green
         Copy-Item $sourcePath $installPath -Recurse
         
+        $serviceBinPath = "$installPath\$executablePath"
         if(-not(Test-ServiceStatus $name)){
-            Write-Host "Create Service[$name] for $installPath\$executablePath"             
-            New-Service -Name $name -BinaryPathName "$installPath\$executablePath" -Description $name -DisplayName $name -StartupType Automatic
+            Write-Host "Create Service[$name] for $serviceBinPath"             
+            New-Service -Name $name -BinaryPathName "$serviceBinPath" -Description $name -DisplayName $name -StartupType Automatic
         }else{
-            Write-Host "Service[$name] already exists" -f green
+            Write-Host "Service[$name] already exists,change BinaryPathName to $serviceBinPath" -f green
+            iex "SC.exe CONFIG $name binPath= $serviceBinPath"
         }
 
         Start-Service -Name $name

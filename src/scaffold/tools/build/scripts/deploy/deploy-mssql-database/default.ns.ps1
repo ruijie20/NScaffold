@@ -31,21 +31,25 @@ $packageInfo = Get-PackageInfo $packageRoot
             }
             $config.userName.Split(",") | % { 
                 ConvertTo-NameInfo $_.trim()
-            } | % { 
-                if ($_.prefix -eq $env:COMPUTERNAME) {
-                    if($config.password -and (-not (Test-User $_.name))){
-                        New-LocalUser $_.name $config.password | Out-Null
-                        Set-LocalGroup $_.name "IIS_IUSRS" -add
+            } | % {
+                $winUserPrefix = $_.prefix
+                $winUserName = $_.name
+                if (($winUserPrefix -eq $env:COMPUTERNAME) -and (-not (Test-User $winUserName))) {
+                    if($config.password){
+                        New-LocalUser $winUserName $config.password | Out-Null
+                        Set-LocalGroup $winUserName "IIS_IUSRS" -add
+                    }else{
+                        throw "Error: Windows user $($env:COMPUTERNAME)\$winUserName not found. Check the name again."
                     }
                 }
-                if ($_.prefix -eq "IIS AppPool") {
-                    $appPoolPath = "IIS:\AppPools\$($_.name)"
+                if ($winUserPrefix -eq "IIS AppPool") {
+                    $appPoolPath = "IIS:\AppPools\$winUserName"
                     if (-not (Test-Path $appPoolPath)) {
-                        New-WebAppPool $_.name
+                        New-WebAppPool $winUserName
                         Set-ItemProperty $appPoolPath ProcessModel.IdentityType 4
                     }
                 }
-                Grant-DBAccess $config.server $config.dbName "$($_.prefix)\$($_.name)"
+                Grant-DBAccess $config.server $config.dbName "$($winUserPrefix)\$winUserName"
             }
         }
     }
