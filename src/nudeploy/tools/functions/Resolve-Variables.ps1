@@ -1,9 +1,10 @@
-Function Resolve-Variables($variables, $context, $startSymbol = "\[", $endSymbol = "\]") {
+Function Resolve-Variables($configPath, $context, $startSymbol = "\[", $endSymbol = "\]") {
+    $variables = Import-Config $configPath
 	$variableGroup = Group-Variables $variables $startSymbol $endSymbol
 	while($variableGroup.unresolved.count -gt 0) {
 		if(-not (Resolve-InContext $variableGroup $context $startSymbol $endSymbol)) {
 			$errorInfo = New-Object PSObject -prop $variableGroup.unresolved | Out-String
-			throw "Cannot finish resolving because some value of placeholder is not defined!`n$errorInfo"
+			throw "Cannot finish resolving $configPath file because some value of placeholder is not defined!`n$errorInfo"
 		}
 	}
 	$variableGroup.resolved

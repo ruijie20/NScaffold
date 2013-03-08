@@ -15,7 +15,6 @@ Function Write-NewConfigFile($appConfig, $appPackageconfig, $envConfig){
 }
 
 Function New-PackageConfigFile($appConfig, $envConfig){
-    $appPackageconfig = Import-Config $appConfig.config
-    $appPackageconfig = Resolve-Variables $appPackageconfig $envConfig.variables
+    $appPackageconfig = Resolve-Variables $appConfig.config $envConfig.variables
     Write-NewConfigFile $appConfig $appPackageconfig $envConfig
 }
