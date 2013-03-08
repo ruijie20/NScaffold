@@ -41,6 +41,7 @@ $packageInfo.Add("sourcePath", $sourcePath)
         }else{
             Write-Host "Service[$name] already exists,change BinaryPathName to $serviceBinPath" -f green
             iex "SC.exe CONFIG $name binPath= $serviceBinPath"
+            Set-Service $name -StartupType Automatic
         }
 
         Start-Service -Name $name
