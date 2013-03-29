@@ -11,7 +11,7 @@ if (-not $config.Port) {
 if(Test-Path $webSitePath) {
     Remove-Website $webSiteName
 }
-Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword
+Reset-AppPool $config.appPoolName $config.appPoolUser $config.appPoolPassword $installArgs.loadUserProfile
 New-Website -Name $webSiteName -Port $config.Port -ApplicationPool $config.appPoolName -PhysicalPath $tempDir | Out-Default
 
 & $installAction

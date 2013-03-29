@@ -15,6 +15,10 @@ Function Reset-AppPool($appPoolName, $username, $password){
         Set-ItemProperty $appPoolPath ProcessModel.Username $username
         Set-ItemProperty $appPoolPath ProcessModel.Password $password
         Set-ItemProperty $appPoolPath ProcessModel.IdentityType 3
+
+        if($loadUserProfile) {
+            Set-ItemProperty $appPoolPath ProcessModel.loadUserProfile $loadUserProfile
+        }
     }
     Set-ItemProperty $appPoolPath managedRuntimeVersion v4.0
     Write-Host "Application pool [$appPoolName] is ready."
