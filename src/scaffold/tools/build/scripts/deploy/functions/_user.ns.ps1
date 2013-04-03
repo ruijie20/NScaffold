@@ -42,11 +42,11 @@ Function New-LocalUser
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$password, 
-  [string]$computerName = $env:ComputerName, 
+  [string]$computerName = $env:UserDomain, 
   [string]$description = "Created by PowerShell" 
  ) 
- if($userName.Length -gt 20){
-  throw "The max length of username cannot exceeds 20 characters. "
+ if($userName.Length -gt 64){
+  throw "The max length of username cannot exceeds 64 characters. "
  }
  $computer = [ADSI]"WinNT://$computerName" 
  $user = $computer.Create("User", $userName) 
@@ -87,7 +87,7 @@ Function New-LocalGroup
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$GroupName, 
-  [string]$computerName = $env:ComputerName, 
+  [string]$computerName = $env:UserDomain, 
   [string]$description = "Created by PowerShell" 
  ) 
   
@@ -142,7 +142,7 @@ Function Set-LocalGroup
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$GroupName, 
-  [string]$computerName = $env:ComputerName, 
+  [string]$computerName = $env:UserDomain, 
   [Parameter(ParameterSetName='addUser')] 
   [switch]$add, 
   [Parameter(ParameterSetName='removeuser')] 
@@ -170,7 +170,7 @@ Function Set-LocalUserPassword
     Set-LocalUserPassword -userName "ed" -password "newpassword" 
     Changes a local user named ed password to newpassword. 
    .Parameter ComputerName 
-    The name of the computer upon which to change the user's password 
+    The name of the computer upon which to change the user`s password 
    .Parameter UserName 
     The name of the user for which to change the password 
    .Parameter password 
@@ -195,7 +195,7 @@ Function Set-LocalUserPassword
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$password, 
-  [string]$computerName = $env:ComputerName 
+  [string]$computerName = $env:UserDomain 
  ) 
  $user = [ADSI]"WinNT://$computerName/$username,user" 
  $user.setpassword($password)  
@@ -252,7 +252,7 @@ function Set-LocalUser
   [switch]$enable, 
   [Parameter(ParameterSetName='DisableUser')] 
   [switch]$disable, 
-  [string]$computerName = $env:ComputerName, 
+  [string]$computerName = $env:UserDomain, 
   [string]$description = "modified via powershell" 
  ) 
  $EnableUser = 512 # ADS_USER_FLAG_ENUM enumeration value from SDK 
@@ -304,7 +304,7 @@ Function Remove-LocalUser
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$userName, 
-  [string]$computerName = $env:ComputerName 
+  [string]$computerName = $env:UserDomain 
  ) 
  $User = [ADSI]"WinNT://$computerName" 
  $user.Delete("User",$userName) 
@@ -340,7 +340,7 @@ Function Remove-LocalGroup
       Mandatory=$True, 
       ValueFromPipeline=$True)] 
   [string]$GroupName, 
-  [string]$computerName = $env:ComputerName 
+  [string]$computerName = $env:UserDomain 
  ) 
  $Group = [ADSI]"WinNT://$computerName" 
  $Group.Delete("Group",$GroupName) 
@@ -376,6 +376,14 @@ Function Get-Username ($fullUsername) {
 
 Function Test-User ($username){
     [Boolean] (Get-WmiObject Win32_UserAccount -Filter "Name='$username'")
+}
+
+Function Test-IsDomain(){
+    if ((gwmi win32_computersystem).partofdomain -eq $true) {
+        return $true
+    }else{
+        return $false
+    }
 }
 
 

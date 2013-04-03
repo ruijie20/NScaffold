@@ -1,9 +1,11 @@
 Function Convert-WinNTUsername($username) {
+	$ComputerName = $env:UserDomain
+
     if($username -match "^{localhost}\\(.+)") {
-        "$($env:COMPUTERNAME)\$($matches[1])"
+        "$ComputerName\$($matches[1])"
     }
     elseif(-not ($username -like "*\*")) {
-        "$($env:COMPUTERNAME)\$username"
+        "$ComputerName\$username"
     }
     else {
         $username
