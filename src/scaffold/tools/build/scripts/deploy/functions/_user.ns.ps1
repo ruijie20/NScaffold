@@ -1,3 +1,7 @@
+Function Test-DomainUser ($domain, $username){
+    [Boolean] (Get-WmiObject Win32_UserAccount | ? {($_.Name -eq "$username") -and ($_.Domain -eq "$domain")})
+}
+
 Function New-LocalUser 
 { 
   <# 
@@ -373,3 +377,5 @@ Function Get-Username ($fullUsername) {
 Function Test-User ($username){
     [Boolean] (Get-WmiObject Win32_UserAccount -Filter "Name='$username'")
 }
+
+

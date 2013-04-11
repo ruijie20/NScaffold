@@ -34,12 +34,12 @@ $packageInfo = Get-PackageInfo $packageRoot
             } | % {
                 $winUserPrefix = $_.prefix
                 $winUserName = $_.name
-                if (($winUserPrefix -eq $env:COMPUTERNAME) -and (-not (Test-User $winUserName))) {
-                    if($config.password){
+                if (-not (Test-DomainUser $winUserPrefix $winUserName)) {
+                    if($config.password -and ($winUserPrefix -eq $env:COMPUTERNAME)){
                         New-LocalUser $winUserName $config.password | Out-Null
                         Set-LocalGroup $winUserName "IIS_IUSRS" -add
                     }else{
-                        throw "Error: Windows user $($env:COMPUTERNAME)\$winUserName not found. Check the name again."
+                        throw "Error: Windows user $($winUserPrefix)\$winUserName not found. Check the name again."
                     }
                 }
                 if ($winUserPrefix -eq "IIS AppPool") {
