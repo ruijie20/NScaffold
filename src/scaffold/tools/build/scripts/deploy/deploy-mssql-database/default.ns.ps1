@@ -34,19 +34,22 @@ $packageInfo = Get-PackageInfo $packageRoot
             } | % {
                 $winUserPrefix = $_.prefix
                 $winUserName = $_.name
-                if (-not (Test-DomainUser $winUserPrefix $winUserName)) {
-                    if($config.password -and ($winUserPrefix -eq $env:COMPUTERNAME)){
-                        New-LocalUser $winUserName $config.password | Out-Null
-                        Set-LocalGroup $winUserName "IIS_IUSRS" -add
-                    }else{
-                        throw "Error: Windows user $($winUserPrefix)\$winUserName not found. Check the name again."
-                    }
-                }
-                if ($winUserPrefix -eq "IIS AppPool") {
+                $isVirtualAccount = $winUserPrefix -eq "IIS AppPool"
+                if ($isVirtualAccount) {
                     $appPoolPath = "IIS:\AppPools\$winUserName"
                     if (-not (Test-Path $appPoolPath)) {
                         New-WebAppPool $winUserName
                         Set-ItemProperty $appPoolPath ProcessModel.IdentityType 4
+                    }
+                } else{
+                    if($config.password -and ($winUserPrefix -eq $env:COMPUTERNAME)){
+                        if (-not (Test-DomainUser $winUserPrefix $winUserName)) {
+                            New-LocalUser $winUserName $config.password | Out-Null
+                            Set-LocalGroup $winUserName "IIS_IUSRS" -add
+                        }
+                    }
+                    if (-not (Test-DomainUser $winUserPrefix $winUserName)) {
+                        throw "Error: Windows user $($winUserPrefix)\$winUserName not found. Check the name again."
                     }
                 }
                 Grant-DBAccess $config.server $config.dbName "$($winUserPrefix)\$winUserName"
