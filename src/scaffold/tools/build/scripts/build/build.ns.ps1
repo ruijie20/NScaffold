@@ -55,7 +55,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         if($codebaseConfig.SCM -eq "Git"){
             $commitVersion = & git log --reverse -1 --format=%H
             Write-ToFile $commitVersionPath "$commitVersion"   
-        }    
+        }
     }
 
     $version = $packageSettings.version
@@ -63,6 +63,10 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     
     #default profile    
     $nodes | ? {-not $_.profile} | % {
+        if($_.prePackage){
+            & $_.prePackage $codeBaseRoot
+        }  
+        
         New-PackageWithSpec $_.spec $_.type {
             param($spec)
             exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }

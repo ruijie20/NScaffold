@@ -16,6 +16,7 @@ Function Get-DeployNodes ($dirs, [string[]]$packageIds){
             'spec' = $_
             'project' = $prj
             'profile' = $packageConfig.profile
+            'prePackage' = $packageConfig.prePackage
             'type' = $packageConfig.type
         }
     } 
