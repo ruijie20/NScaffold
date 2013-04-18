@@ -6,10 +6,15 @@ Function Overwrite-AppVersionWithVersionSpec($envConfig, $versionSpecPath){
 }
 
 Function Import-VersionSpec($versionSpecPath) {
+    $versionSpec= @{}
     if($versionSpecPath -and (Test-Path $versionSpecPath)) {
-        $versionSpec = Import-Config $versionSpecPath
-    }else{
-        $versionSpec = @{}
+        Get-Content $versionSpecPath | % {
+            if($_ -match "(.*?)\.(\d+((\.\d+)((\.\d+)(\.\d+)?)?)?)") {
+                $key = $($matches[1])
+                $value = $($matches[2])
+                $versionSpec[$key] = $value
+            }
+        }
     }
     $versionSpec
 }
