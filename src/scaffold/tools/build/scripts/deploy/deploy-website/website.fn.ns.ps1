@@ -8,6 +8,15 @@ Function Get-UrlContent($url){
         }
     }
 }
+Function Test-UrlExisted($url){
+    try{
+        (New-Object System.Net.WebClient).DownloadString($url)
+        $true
+    }catch{
+        $false
+    }
+}
+
 Function Skip-HTTSCertValidation{
     $SetSuccessValidatorSrc = @'
     public static void SetSuccessValidator()

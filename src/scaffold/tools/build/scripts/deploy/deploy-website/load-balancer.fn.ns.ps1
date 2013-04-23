@@ -27,12 +27,7 @@ Function Test-SuspendedFromLoadBalancer($websiteName){
     Trace-Progress "Test-SuspendedFromLoadBalancer for site [$websiteName]" {
         if(-not(Test-SiteExisted $websiteName)) { return $true; }
         $readyPageUrl = Get-UrlForSite $websiteName "/ready.txt"
-        try{
-            $content = Get-UrlContent $readyPageUrl
-            $false
-        }catch{
-            $true
-        }
+        -not (Test-UrlExisted $readyPageUrl)
     }
 }
 Function Assert-SuspendedFromLoadBalancer($websiteName) {
