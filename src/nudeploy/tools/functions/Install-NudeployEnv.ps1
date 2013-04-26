@@ -9,6 +9,12 @@ Function Install-NuDeployEnv{
     Prepare-AllNodes $envConfig | Out-Default
     $envConfig.apps | % { Deploy-App $_ $envConfig }
 }
+Function Assert-EnvConfig{
+    param(
+       [Parameter(Mandatory=$true, Position=0)][string] $envPath
+    )
+    Load-EnvironmentConfig $envPath
+}
 
 Function Get-EnvConfigFilePath($envPath){
     if(Test-Path -PathType Leaf $envPath){
@@ -47,16 +53,25 @@ Function Overwrite-ConfigValue($envConfig, $key, $value){
     }
 }
 
-Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
+Function Load-EnvironmentConfig($envPath){
     $envConfig = Get-EnvConfig $envPath
     Set-DefaultConfigValue $envConfig 'nodeDeployRoot' "C:\deployment"
     Set-DefaultConfigValue $envConfig 'packageConfigFolder' "$($envConfig.configPath)\..\app-configs"
     Set-DefaultConfigValue $envConfig 'deploymentHistoryFolder' "$($envConfig.packageConfigFolder)\..\deployment-history"
-    Overwrite-ConfigValue $envConfig 'nugetRepo' $nugetRepoSource
-    Overwrite-AppVersionWithVersionSpec $envConfig $versionSpecPath
-    Set-DefaultAppVersionWithLatestVersion $envConfig
     Set-DefaultAppConfigFile $envConfig
     Overwrite-AppPackageConfigFileWithGlobalVariables $envConfig
+    $envConfig
+}
+
+Function Resolve-AppVersions($envConfig, $versionSpecPath){
+    Overwrite-AppVersionWithVersionSpec $envConfig $versionSpecPath
+    Set-DefaultAppVersionWithLatestVersion $envConfig
+}
+
+Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
+    $envConfig = Load-EnvironmentConfig $envPath
+    Overwrite-ConfigValue $envConfig 'nugetRepo' $nugetRepoSource
+    Resolve-AppVersions $envConfig $versionSpecPath
     Assert-AppConfigs $envConfig
     $envConfig
 }
