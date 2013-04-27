@@ -51,7 +51,8 @@ Function New-LocalUser
  $computer = [ADSI]"WinNT://$computerName" 
  $user = $computer.Create("User", $userName) 
  $user.setpassword($password) 
- $user.put("description",$description)  
+ $user.put("description",$description)
+ $user.put("PasswordExpired", 0) 
  $user.SetInfo() 
 } #end function New-LocalUser 
  
