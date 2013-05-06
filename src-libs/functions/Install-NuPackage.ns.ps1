@@ -26,7 +26,7 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
     if($version){
         $installedVersion = $version
     } else {
-        $installedVersion = $nuGetInstallOutput -match "(?i)\'$package (?<version>.*)\'" | % { $matches.version }  
+        $installedVersion = "$nuGetInstallOutput" -match "(?i)\'$package (?<version>.*?)\'" | % { $matches.version }  
     }
 
     if ($nuGetInstallOutput -match "Unable") {
