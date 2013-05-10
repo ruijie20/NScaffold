@@ -2,11 +2,12 @@ Function Install-NuDeployEnv{
     param(
        [Parameter(Mandatory=$true, Position=0)][string] $envPath,
        [string] $versionSpec,
-       [string] $nugetRepoSource
+       [string] $nugetRepoSource,
+       [switch] $dryRun
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
     Initialize-Nodes $envConfig | Out-Default
-    $envConfig.apps | % { Deploy-App $_ $envConfig }
+    $envConfig.apps | % { Deploy-App $_ $envConfig $dryRun}
 }
 
 Function Assert-EnvConfig{
@@ -79,7 +80,7 @@ Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
 Function Assert-AppConfigs($envConfig) {
     if (-not $envConfig.apps) {
         throw "appEnvConfigs is not configured properly. "
-    }    
+    }
     $envConfig.apps | %{
         if(-not($_.server)){
             throw "Server of package $_.package is not found"
@@ -96,7 +97,7 @@ Function Assert-AppConfigs($envConfig) {
     }
 }
 
-Function Deploy-App ($appConfig, $envConfig) {
+Function Deploy-App ($appConfig, $envConfig, $dryRun) {
     $appConfig.env = $envConfig.variables.ENV
     $features = $appConfig.features
     $forceRedeploy = $features -contains "forceRedeploy"
@@ -107,14 +108,16 @@ Function Deploy-App ($appConfig, $envConfig) {
 
         $packageConfig = Import-Config $appConfig.config
         Run-RemoteScript $appConfig.server {
-            param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features)
+            param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
             $destAppPath = "$nodeDeployRoot\$package" 
 
             $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
 
             Import-Module $nudeployModule.FullName -Force
-            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features
-        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $packageConfig, $features
+            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo `
+                -workingDir $destAppPath -co $packageConfig -features $features -ignoreInstall:$dryRun
+        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, `
+            $packageConfig, $features, $dryRun
     }
     $appConfig
 }

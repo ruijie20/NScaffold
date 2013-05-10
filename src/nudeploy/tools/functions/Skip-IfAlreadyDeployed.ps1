@@ -1,4 +1,4 @@
-Function Skip-IfAlreadyDeployed ($root, $appConfig, [switch]$force, $scriptBlockToDeploy){    
+Function Skip-IfAlreadyDeployed ($root, $appConfig, [switch]$force, $scriptBlockToDeploy, [switch]$dryRun){    
     New-Item -itemtype directory $root -Force | Out-Null
     Function Register-SuccessDeployment($deployResult) {
         Remove-PreviousDeployment $root $appConfig.env $appConfig.server $appConfig.package
@@ -31,11 +31,14 @@ Function Skip-IfAlreadyDeployed ($root, $appConfig, [switch]$force, $scriptBlock
 
     if((-not $force) -and (Test-AlreadyDeployed $appConfig)){
         Write-Host "$(Convert-AppConfigToString $appConfig) has ALREADY been deployed. Skip deployment." -f cyan
+        Import-Clixml $lastDeploymentResult
     }else{       
         $deployResult = (& $scriptBlockToDeploy)
-        Register-SuccessDeployment $deployResult
+        if(-not($dryRun)){
+            Register-SuccessDeployment $deployResult
+        }
         Write-Host "Succesfully deployed $(Convert-AppConfigToString $appConfig)." -f cyan
+        $deployResult
     }
-    Import-Clixml $lastDeploymentResult
 }
 

@@ -126,4 +126,18 @@ Describe "Skip-IfAlreadyDeployed" {
         $result.should.be("installed")
     }
 
+    It "should deploy redeploying a new version even after successful dryrun" {
+        remove-item $root -recurse -erroraction SilentlyContinue
+        Skip-IfAlreadyDeployed $root $appConfig -dryRun {
+           Write-Host "In dryrun"
+        }
+
+        $result = @{runAfterDryRun = $false}
+        Skip-IfAlreadyDeployed $root $appConfig {
+           Write-Host "run after dryrun"
+           $result.runAfterDryRun = $true
+        }
+
+        $result.runAfterDryRun.should.be($true)
+    }    
 }

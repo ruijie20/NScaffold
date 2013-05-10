@@ -34,10 +34,10 @@ Function Install-NuDeployPackage(){
 
     $packageDir = Install-NuPackage $packageId $workingDir $version
 
+    if ($config -and (Test-Path "$packageDir\config.ini")){
+        Verify-Config $config "$packageDir\config.ini"
+    }
     if (-not $ignoreInstall -and (Test-Path "$packageDir\install.ps1")) {
-        if ($config -and (Test-Path "$packageDir\config.ini")){
-            Verify-Config $config "$packageDir\config.ini"
-        }
         $result = Use-Directory $packageDir {
             if ($features -eq $null) {
                 & ".\install.ps1" $config
@@ -47,7 +47,7 @@ Function Install-NuDeployPackage(){
             if(-not($LastExitCode -eq 0)){
                 throw "install.ps1 end with exit code: $Lastexitcode"
             }
-        } 
+        }
     }
     if($PsCmdlet.ParameterSetName -eq 'configObject') {
         Remove-Item $config -Force -ea SilentlyContinue

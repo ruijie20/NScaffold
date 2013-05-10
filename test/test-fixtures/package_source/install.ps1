@@ -17,3 +17,5 @@ $features | Set-Content $fixturesSpy
 
 $configFileSpy = "$packageRoot\config.txt"
 Copy-Item $configFile $configFileSpy
+
+Set-Content "$packageRoot\fileGeneratedByInstall.txt" "fileGeneratedByInstall"
