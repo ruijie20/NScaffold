@@ -160,34 +160,13 @@ Describe "Install-NudeployEnv" {
     }
 }
 
-Describe "Install-NudeployEnv with spec nudeploy version in node server" {
-    Setup-ConfigFixtures
-    Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.1"
-    Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.2"
-    Install-NugetPackage $nuDeployPackageName
-    Import-NudeployModule
-    Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 0.9
-
-    It "should deploy the package on the host specified in env config with correct package configurations" {
-        $envConfigFile = "$fixtures\config_spec_nudeploy\env.config.ps1"
-
-        Install-NudeployEnv $envConfigFile
-        
-        Assert-PackageInstalled $envConfigFile "Test.Package" "0.9"
-
-        $envConfig = & $envConfigFile
-        "$($envConfig.nodeDeployRoot)\tools\NScaffold.NuDeploy.0.0.1".should.exist();
-        (Test-Path  "$($envConfig.nodeDeployRoot)\tools\NScaffold.NuDeploy.0.0.2").should.be($false);
-    }
-}
-
 Describe "Install-NudeployEnv with spec param" {
     Setup-ConfigFixtures
     ReImport-NudeployModule
     Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
     Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 0.9
 
-    It "should deploy the package on the host specified in env config with correct package configurations" {
+    It "should deploy the package on the host specified in env config with correct package configurations with spec param" {
         $envConfigFile = "$fixtures\config_simple\env.config.ps1"
         $vesrionSpecFile = "$fixtures\versionSpec.ini"
 
@@ -205,7 +184,6 @@ Describe "Install-NudeployEnv with spec param" {
             $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
             $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
         }
-
     }
 }
 
@@ -215,7 +193,7 @@ Describe "Install-NudeployEnv with multi-package" {
     Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 2.0 
     Publish-NugetPackage "$fixtures\package_source_multiple\test_package_multiple.nuspec" 2.1
 
-    It "should deploy the package on the host specified in env config with correct package configurations" {
+    It "should deploy the package on the host specified in env config with correct package configurations with multi-package" {
         $envConfigFile = "$fixtures\config_multiple\env.config.ps1"
 
         Install-NudeployEnv $envConfigFile

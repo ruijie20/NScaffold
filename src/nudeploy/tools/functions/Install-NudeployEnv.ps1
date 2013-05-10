@@ -2,13 +2,13 @@ Function Install-NuDeployEnv{
     param(
        [Parameter(Mandatory=$true, Position=0)][string] $envPath,
        [string] $versionSpec,
-       [string] $nugetRepoSource,
-       [string] $nugetExeUrl
+       [string] $nugetRepoSource
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
-    Prepare-AllNodes $envConfig | Out-Default
+    Initialize-Nodes $envConfig | Out-Default
     $envConfig.apps | % { Deploy-App $_ $envConfig }
 }
+
 Function Assert-EnvConfig{
     param(
        [Parameter(Mandatory=$true, Position=0)][string] $envPath
@@ -96,73 +96,6 @@ Function Assert-AppConfigs($envConfig) {
     }
 }
 
-Function Prepare-AllNodes($envConfig){
-    $targetNodes = $envConfig.apps | % { $_.server } | Sort | Get-Unique
-    Add-HostAsTrusted $targetNodes
-    $targetNodes | % { Prepare-Node $_ $envConfig.nugetRepo $envConfig.nodeDeployRoot $envConfig.nodeNuDeployVersion} | Out-Default
-    
-}
-Function Add-HostAsTrusted($targetNodes) {
-    winrm set winrm/config/client "@{TrustedHosts=`"$($targetNodes -join ",")`"}" | Out-Default
-}
-Function Prepare-Node($server, $nugetRepo, $nodeDeployRoot, $nodeNuDeployVersion){
-    Write-Host "Preparing to deploy on node [$server]...." -f cyan
-
-    Run-RemoteScript $server {
-        param($nodeDeployRoot)
-        if(Test-Path $nodeDeployRoot){
-            Remove-Item $nodeDeployRoot -r -Force 
-        }
-        New-Item $nodeDeployRoot -type directory 
-        New-Item "$nodeDeployRoot\tools" -type directory
-        New-Item "$nodeDeployRoot\nupkgs" -type directory
-    } -argumentList $nodeDeployRoot | out-Default
-
-    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
-    if(-not $nugetExeUrl){
-        Copy-FileRemote $server "$nuget" "$nodeDeployRoot\tools\nuget.exe" | out-Default
-    } else {
-        Run-RemoteScript $server {
-            param($nugetExeUrl, $nodeDeployRoot)
-            $webClient = new-object System.Net.WebClient
-            $webClient.DownloadFile($nugetExeUrl, "$nodeDeployRoot\tools\nuget.exe")
-        } -argumentList $nugetExeUrl, $nodeDeployRoot | out-Default        
-    }    
-
-    $nuDeployPackageId = 'NScaffold.NuDeploy'
-    $nuDeploySource = Prepre-NudeploySource $nugetRepo
-
-    Run-RemoteScript $server {
-        param($nodeDeployRoot, $nuDeployPackageId, $nuDeploySource)
-        Push-Location
-        Set-Location "$nodeDeployRoot\tools"
-        if($nodeNuDeployVersion) {
-            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -version $nodeNuDeployVersion -NoCache
-        }else{
-            & ".\nuget.exe" install $nuDeployPackageId -source $nuDeploySource -NoCache
-        }
-        if(-not($LASTEXITCODE -eq 0)){
-            throw "Setup nuDeployPackage failed"
-        }
-        Pop-Location
-    } -argumentList $nodeDeployRoot, $nuDeployPackageId, $nuDeploySource | out-Default
-    Write-Host "Node [$server] is now ready for deployment.`n" -f cyan
-}
-Function Prepre-NudeploySource($nugetRepo) {
-    $nuDeployPackageId = 'NScaffold.NuDeploy'
-    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
-    $isNudeployInRepo = [boolean](& $nuget list $nuDeployPackageId -source $nugetRepo | ? { 
-        $_ -match "^$nuDeployPackageId (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })
-
-    if(-not $isNudeployInRepo){
-        $nupkg = Get-Item "$PSScriptRoot\..\*.nupkg"
-        Copy-FileRemote $server $nupkg.FullName "$nodeDeployRoot\nupkgs\$($nupkg.Name)" | out-Default
-        "$nodeDeployRoot\nupkgs\"
-    } else {
-        $nugetRepo  
-    }
-}
-
 Function Deploy-App ($appConfig, $envConfig) {
     $appConfig.env = $envConfig.variables.ENV
     $features = $appConfig.features
@@ -181,7 +114,6 @@ Function Deploy-App ($appConfig, $envConfig) {
 
             Import-Module $nudeployModule.FullName -Force
             Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo -workingDir $destAppPath -co $packageConfig -features $features
-
         } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, $packageConfig, $features
     }
     $appConfig
