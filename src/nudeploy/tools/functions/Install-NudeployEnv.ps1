@@ -3,18 +3,11 @@ Function Install-NuDeployEnv{
        [Parameter(Mandatory=$true, Position=0)][string] $envPath,
        [string] $versionSpec,
        [string] $nugetRepoSource,
-       [switch] $dryRun
+       [switch] $DryRun
     )
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
     Initialize-Nodes $envConfig | Out-Default
     $envConfig.apps | % { Deploy-App $_ $envConfig $dryRun}
-}
-
-Function Assert-EnvConfig{
-    param(
-       [Parameter(Mandatory=$true, Position=0)][string] $envPath
-    )
-    Load-EnvironmentConfig $envPath
 }
 
 Function Get-EnvConfigFilePath($envPath){
@@ -54,25 +47,16 @@ Function Overwrite-ConfigValue($envConfig, $key, $value){
     }
 }
 
-Function Load-EnvironmentConfig($envPath){
+Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
     $envConfig = Get-EnvConfig $envPath
     Set-DefaultConfigValue $envConfig 'nodeDeployRoot' "C:\deployment"
     Set-DefaultConfigValue $envConfig 'packageConfigFolder' "$($envConfig.configPath)\..\app-configs"
     Set-DefaultConfigValue $envConfig 'deploymentHistoryFolder' "$($envConfig.packageConfigFolder)\..\deployment-history"
     Set-DefaultAppConfigFile $envConfig
     Overwrite-AppPackageConfigFileWithGlobalVariables $envConfig
-    $envConfig
-}
-
-Function Resolve-AppVersions($envConfig, $versionSpecPath){
+    Overwrite-ConfigValue $envConfig 'nugetRepo' $nugetRepoSource
     Overwrite-AppVersionWithVersionSpec $envConfig $versionSpecPath
     Set-DefaultAppVersionWithLatestVersion $envConfig
-}
-
-Function Get-DesiredEnvConfig($envPath, $nugetRepoSource, $versionSpecPath) {
-    $envConfig = Load-EnvironmentConfig $envPath
-    Overwrite-ConfigValue $envConfig 'nugetRepo' $nugetRepoSource
-    Resolve-AppVersions $envConfig $versionSpecPath
     Assert-AppConfigs $envConfig
     $envConfig
 }
@@ -102,11 +86,12 @@ Function Deploy-App ($appConfig, $envConfig, $dryRun) {
     $features = $appConfig.features
     $forceRedeploy = $features -contains "forceRedeploy"
 
-    $appConfig.exports = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy {
+    $appConfig.exports = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy -dryRun:$dryRun {
         $nugetRepo = $envConfig.nugetRepo
         $nodeDeployRoot = $envConfig.nodeDeployRoot 
 
         $packageConfig = Import-Config $appConfig.config
+
         Run-RemoteScript $appConfig.server {
             param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
             $destAppPath = "$nodeDeployRoot\$package" 

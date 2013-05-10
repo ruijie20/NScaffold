@@ -32,8 +32,9 @@ Describe "Install-NudeployEnv with DryRun" {
         Setup-ConfigFixtures
         ReImport-NudeployModule
         Publish-NugetPackage "$fixtures\package_source\test_package.nuspec" 1.0 
+        Assert-InstallIsNotExecuted $envConfigFile "Test.Package" "1.0"
 
-        [object[]]$appsConfig = Install-NudeployEnv $envConfigFile -DryRun
+        [object[]]$appsConfig = Install-NudeployEnv -DryRun $envConfigFile
         
         Assert-InstallIsNotExecuted $envConfigFile "Test.Package" "1.0"
     }
