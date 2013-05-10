@@ -7,16 +7,14 @@ $packageDir = Join-Path $root "tmp\pkgs"
 
 Function Publish-Package($packageFileName, $repoPath){
 	$sourceFilePath = "$packageDir\$packageFileName"
-	$destFilePath = "$repoPath\NScaffold.NuDeploy"
+	$destFilePath = "$repoPath\NScaffold.NuDeploy\$packageFileName"
 	if(-not(Test-Path $sourceFilePath)){
 		throw "package file not found $sourceFilePath"
 	}
 	if(Test-Path $destFilePath){
 		throw "Package[$packageFileName] already existed in repository[$repoPath]"
 	}
-write-host "Copy-Item $sourceFilePath $destFilePath"
 	Copy-Item $sourceFilePath $destFilePath
-write-host "1"
 }
 
 $package = "NScaffold.NuDeploy"
