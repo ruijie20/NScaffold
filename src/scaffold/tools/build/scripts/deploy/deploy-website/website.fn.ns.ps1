@@ -9,6 +9,7 @@ Function Get-UrlContent($url){
     }
 }
 Function Test-UrlExisted($url){
+    Skip-HTTSCertValidation
     try{
         (New-Object System.Net.WebClient).DownloadString($url)
         $true
