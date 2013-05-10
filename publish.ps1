@@ -3,21 +3,31 @@ trap {
     exit 1
 }
 $root = Split-Path -parent $MyInvocation.MyCommand.Definition
+$packageDir = Join-Path $root "tmp\pkgs"
 
-$packageJobName = $Env:PACKAGE_JOB_NAME
-$packageJobNumber = $Env:PACKAGE_JOB_NUMBER
+Function Publish-Package($packageFileName, $repoPath){
+	$sourceFilePath = "$packageDir\$packageFileName"
+	$destFilePath = "$repoPath\NScaffold.NuDeploy"
+	if(-not(Test-Path $sourceFilePath)){
+		throw "package file not found $sourceFilePath"
+	}
+	if(Test-Path $destFilePath){
+		throw "Package[$packageFileName] already existed in repository[$repoPath]"
+	}
+write-host "Copy-Item $sourceFilePath $destFilePath"
+	Copy-Item $sourceFilePath $destFilePath
+write-host "1"
+}
 
-$versionUrl = "http://10.18.8.119:8080/job/$packageJobName/$packageJobNumber/artifact/tmp/pkgs/version.txt" 
+$package = "NScaffold.NuDeploy"
+[regex]$regex = "NScaffold.NuDeploy.([\d\.]*)\.nupkg"
+$nupackagePath = Get-ChildItem $packageDir | ? {$_.Name -like "$package*"} | Select-Object -First 1
+$version = $nupackagePath.FullName |  % { $regex.Matches($_) } | % { $_.Groups[1].Value }
+$packageFileName = "$package.$version.nupkg"
 
-$request = [System.Net.HttpWebRequest]::Create($versionUrl)
-$request.Headers.Add([System.Net.HttpRequestHeader]::AcceptEncoding, "gzip,deflate")
-$request.AutomaticDecompression = ([System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate)
+$tempRepoFolder = "\\10.18.7.148\nuget-servers\nuget-pkgs-tmp"
+$integrationRepoFolder = "\\10.18.7.148\nuget-servers\nuget-pkgs-integration"
 
-Write-Host "Begin download version file from: $versionUrl"
-$response = $request.GetResponse()
-$sr = new-object System.IO.StreamReader $response.GetResponseStream()
-$version = $sr.ReadToEnd()
-$response.close()
-$version = $version.trim()
+Publish-Package $packageFileName $tempRepoFolder
+Publish-Package $packageFileName $integrationRepoFolder
 
-Copy-Item "\\10.18.7.148\c$\nuget-servers\nuget-pkgs-tmp\NScaffold.NuDeploy\NScaffold.NuDeploy.$version.nupkg" "\\10.18.7.148\c$\nuget-servers\nuget-pkgs-integration\NScaffold.NuDeploy\"
