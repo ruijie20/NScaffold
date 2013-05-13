@@ -79,6 +79,8 @@ Function Assert-AppConfigs($envConfig) {
     if(-not $envConfig.variables.ENV){
         Write-Host 'Warning: Environment variables are not set in $envConfig.variables.ENV' -f yellow
     }
+
+    Assert-PackagesInRepo $envConfig
 }
 
 Function Deploy-App ($appConfig, $envConfig, $dryRun) {
