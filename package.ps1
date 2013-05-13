@@ -10,9 +10,17 @@ if(test-path .\tmp\pkgs\){
 } else {
 	mkdir .\tmp\pkgs\
 }
-$nuget = "$root\tools\nuget\NuGet.exe"
-& $nuget pack .\src\nudeploy\nscaffold.nudeploy.nuspec -NoPackageAnalysis -o $packageDir
 
+if($Env:CRUISE_PIPELINE_COUNTER){
+	$buildNumber = $Env:CRUISE_PIPELINE_COUNTER
+}else{
+	$buildNumber = 0
+}
+$version = "0.0.113.$buildNumber"
+Write-Host "Create Package version $version"
+
+$nuget = "$root\tools\nuget\NuGet.exe"
+& $nuget pack .\src\nudeploy\nscaffold.nudeploy.nuspec -NoPackageAnalysis -o $packageDir -Version $version
 
 if($LastExitCode -ne 0){
 	throw "nuget push fail."

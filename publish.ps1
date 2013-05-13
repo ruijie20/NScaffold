@@ -14,6 +14,7 @@ Function Publish-Package($packageFileName, $repoPath){
 	if(Test-Path $destFilePath){
 		throw "Package[$packageFileName] already existed in repository[$repoPath]"
 	}
+	Write-Host "Copy-Item $sourceFilePath $destFilePath"
 	Copy-Item $sourceFilePath $destFilePath
 }
 
