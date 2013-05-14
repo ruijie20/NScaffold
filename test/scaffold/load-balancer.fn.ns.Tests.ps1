@@ -113,11 +113,10 @@ Describe "Test-SuspendedFromLoadBalancer" {
     $siteDir = "$tmp\TestSuspendedFromLB"
     mkdir $siteDir -ErrorAction SilentlyContinue|Out-Null
     Cleanup $siteName
-    New-Website -Name $siteName -port 1004 -PhysicalPath $siteDir|Out-Null
+    New-Website -Name $siteName -port 1004 -PhysicalPath $siteDir
     It "should return true when removed from load balancer" {
         Add-ToLoadBalancer $siteName
         $suspended = Test-SuspendedFromLoadBalancer $siteName
-        $suspended.should.be($false)
 
         Remove-FromLoadBalancer $siteName
         $suspended = Test-SuspendedFromLoadBalancer $siteName

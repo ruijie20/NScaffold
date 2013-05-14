@@ -6,7 +6,11 @@ $root = "$here\..\..\.."
 Describe "New-LocalUser" {
     $computerName = $env:computerName
     $computer = [ADSI]"WinNT://$computerName"
-    $user = $computer.children.Find("TestUser", "user")
+    try{
+        $user = $computer.children.Find("TestUser", "user")    
+    }catch{
+
+    }    
     if($user) {
         $computer.children.Remove($user)
     }

@@ -1,4 +1,4 @@
-Function New-PackageWithSpec($templateSpecFile, $type, $packAction) {
+Function New-PackageSpec($templateSpecFile, $type) {
     Function Append-FileNode($src, $target) {
         $fileNode = $specXml.CreateElement('file')
         $fileNode.SetAttribute('src', $src)
@@ -26,9 +26,5 @@ Function New-PackageWithSpec($templateSpecFile, $type, $packAction) {
         }
         $specXml.Save($fullSpecFile)
     }
-    try {
-        & $packAction $fullSpecFile
-    } finally {
-        Remove-Item $fullSpecFile
-    }    
+    $fullSpecFile
 }
