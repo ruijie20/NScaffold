@@ -63,7 +63,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     
     #default profile    
     $nodes | ? {-not $_.profile} | % {
-        Pack-Node $_ {
+        Pack-Node $_ $version {
             param($spec)
             exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }
         }
@@ -80,7 +80,7 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         Set-Location $codebaseRoot        
         exec {&$yam build $projects -runtimeProfile $profile}
         $currentNodes | % {
-            Pack-Node $_ {
+            Pack-Node $_ $version {
                 param($spec)
                 exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }
             }

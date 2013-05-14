@@ -1,9 +1,9 @@
-Function Pack-Node($node, $packAction){
+Function Pack-Node($node, $version, $packAction){
     if($node.prePackage){
     	Push-Location
     	Set-Location $node.spec.DirectoryName
     	try{
-    		& $node.prePackage $node.spec.DirectoryName	
+    		& $node.prePackage $node.spec.DirectoryName $version
     	} finally {
     		Pop-Location	
     	}
