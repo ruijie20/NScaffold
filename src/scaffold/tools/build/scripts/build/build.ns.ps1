@@ -63,8 +63,9 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
     
     #default profile    
     $nodes | ? {-not $_.profile} | % {
+
         if($_.prePackage){
-            & $_.prePackage $codeBaseRoot
+            & $_.prePackage $_.spec.DirectoryName
         }  
         
         New-PackageWithSpec $_.spec $_.type {
@@ -83,7 +84,10 @@ Task Package -depends Compile -description "Compile, package and push to nuget s
         Clean-Projects $dirs
         Set-Location $codebaseRoot        
         exec {&$yam build $projects -runtimeProfile $profile}
-        $currentNodes | % {            
+        $currentNodes | % {
+            if($_.prePackage){
+                & $_.prePackage $_.spec.DirectoryName
+            }  
             New-PackageWithSpec $_.spec $_.type {
                 param($spec)
                 exec { & $nuget pack $spec -prop Configuration=$buildConfiguration -Version $version -NoPackageAnalysis -OutputDirectory $packageOutputDir }
