@@ -15,6 +15,8 @@ $packageInfo.Add("sourcePath", $sourcePath)
         $executablePath = $installArgs.executablePath
         $name = $config.ServiceName
         $installPath = $config.ServicePath
+        $username = $config.UserName
+        $password = $config.Password
 
         for($i = 0; $i -lt $retryCount; $i++){
             if(Test-ServiceStatus $name "Running"){
@@ -37,7 +39,14 @@ $packageInfo.Add("sourcePath", $sourcePath)
         $serviceBinPath = "$installPath\$executablePath"
         if(-not(Test-ServiceStatus $name)){
             Write-Host "Create Service[$name] for $serviceBinPath"             
-            New-Service -Name $name -BinaryPathName "$serviceBinPath" -Description $name -DisplayName $name -StartupType Automatic
+            if(($username) -and ($password)) {
+                $secpasswd = ConvertTo-SecureString "$password" -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential ("$username", $secpasswd)
+                New-Service -Name $name -BinaryPathName "$serviceBinPath" -Description $name -DisplayName $name -StartupType Automatic -credential $credential
+            } else {
+                New-Service -Name $name -BinaryPathName "$serviceBinPath" -Description $name -DisplayName $name -StartupType Automatic
+            }
+            
         }else{
             Write-Host "Service[$name] already exists,change BinaryPathName to $serviceBinPath" -f green
             iex "SC.exe CONFIG $name binPath= $serviceBinPath"

@@ -1,6 +1,6 @@
 Function ConvertTo-NameInfo($username) {
     $result = @{
-        'prefix' = $env:COMPUTERNAME
+        'prefix' = $env:UserDomain
     }
     if ($username -match '(?:(?<prefix>[^\\]+)\\)?(?<name>.+)' ) {
         if ($Matches.prefix -ne '{localhost}'){

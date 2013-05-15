@@ -33,7 +33,7 @@ Function New-DBServerLogin {
 	param($server, $winntUserName, $loginPassword)
 
 	$username = Get-Username $winntUserName
-	if($loginPassword -and (-not (Test-User $username))){
+	if($loginPassword -and (-not (Test-IsDomain)) -and (-not (Test-User $username))){
 		New-LocalUser $username $loginPassword | Out-Null
 		Set-LocalGroup $username "IIS_IUSRS" -add
 	}
