@@ -4,56 +4,14 @@ $tmp = "$root\tmp"
 New-Item $tmp -Type Directory -ErrorAction SilentlyContinue|out-default
 $tmp = resolve-path $tmp
 $fixtures = "$TestDrive\test-fixtures"
-. "$root\src\scaffold\tools\build\scripts\deploy\functions\Install-WindowsFeature.ns.ps1"
 . "$root\src\scaffold\tools\build\scripts\deploy\functions\_user.ns.ps1"
 . "$root\src\scaffold\tools\build\scripts\deploy\functions\ConvertTo-NameInfo.ns.ps1"
-. "$root\src\scaffold\tools\build\scripts\deploy\deploy-website\authorization-rule.fn.ns.ps1"
-
-Import-Module Servermanager
-Import-Module Webadministration
-
-Describe "Install Windows Authentication" {
-
-    It "should success when install windows authentication" {
-        Remove-WindowsFeature "Web-Windows-Auth"
-        (Get-WindowsFeature "Web-Windows-Auth").Installed.should.be($False)
-		
-    	Install-WindowsAuthentication
-        (Get-WindowsFeature "Web-Windows-Auth").Installed.should.be($True)
-        $iisWindowsAuthenticationEnabled = (Get-WebConfigurationProperty -filter /system.WebServer/security/authentication/windowsAuthentication -name enabled).Value
-        $iisWindowsAuthenticationEnabled.should.be($False)
-
-    	Install-WindowsAuthentication
-        (Get-WindowsFeature "Web-Windows-Auth").Installed.should.be($True)
-        $iisWindowsAuthenticationEnabled = (Get-WebConfigurationProperty -filter /system.WebServer/security/authentication/windowsAuthentication -name enabled).Value
-        $iisWindowsAuthenticationEnabled.should.be($False)
-    }
-
-    It "should ensure windows authentication disabled when reinstall windows authentication" {
-    	Install-WindowsAuthentication
-        (Get-WindowsFeature "Web-Windows-Auth").Installed.should.be($True)
-        $iisWindowsAuthenticationEnabled = (Get-WebConfigurationProperty -filter /system.WebServer/security/authentication/windowsAuthentication -name enabled).Value
-        $iisWindowsAuthenticationEnabled.should.be($False)
-        
-    	Set-WebConfigurationProperty -filter /system.WebServer/security/authentication/windowsAuthentication -name enabled -value false
-        Install-WindowsAuthentication
-        (Get-WindowsFeature "Web-Windows-Auth").Installed.should.be($True)
-        $iisWindowsAuthenticationEnabled = (Get-WebConfigurationProperty -filter /system.WebServer/security/authentication/windowsAuthentication -name enabled).Value
-        $iisWindowsAuthenticationEnabled.should.be($False)
-    }
+try{
+    . "$root\src\scaffold\tools\build\scripts\deploy\deploy-website\authorization-rule.ns.ps1" -installAction {}    
+} catch{
 
 }
 
-Describe "Install Url Authorization" {
-
-    It "should success when install url authorization" {
-        Remove-WindowsFeature "Web-Url-Auth"
-        (Get-WindowsFeature "Web-Url-Auth").Installed.should.be($False)
-        
-        Install-UrlAuthorization
-        (Get-WindowsFeature "Web-Url-Auth").Installed.should.be($True)
-    }
-}
 
 Describe "Check IfUserExists" {
 	It "should throw exception when users not exist." {
