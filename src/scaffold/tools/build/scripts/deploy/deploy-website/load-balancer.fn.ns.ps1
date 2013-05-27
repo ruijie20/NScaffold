@@ -8,7 +8,7 @@ Function Remove-FromLoadBalancer($websiteName) {
     if(Test-SiteExisted $websiteName){
         Trace-Progress "Remove-FromLoadBalancer for site $websiteName" {
             $readyPagePath = Get-ReadyPagePath $websiteName
-            Remove-Item $readyPagePath -ErrorAction SilentlyContinue
+            Remove-Item $readyPagePath
         }
     }
 }
