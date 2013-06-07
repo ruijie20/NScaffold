@@ -67,13 +67,13 @@ Function Assert-AppConfigs($envConfig) {
     }
     $envConfig.apps | %{
         if(-not($_.server)){
-            throw "Server of package $_.package is not found"
+            throw "Server of package $($_.package) is not found"
         }
         if(-not($_.version)){
-            throw "Version of package $_.package is not found"
+            throw "Version of package $($_.package) is not found"
         }
         if(-not($_.config) -or (-not (Test-Path $_.config))){
-            throw "Config of package $_.package is not found"
+            throw "Config of package $($_.package) is not found"
         }
     }
     if(-not $envConfig.variables.ENV){
