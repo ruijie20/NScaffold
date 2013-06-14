@@ -14,4 +14,14 @@ Function Pack-Node($node, $version, $packAction){
     } finally {
         Remove-Item $fullSpecFile
     }
+
+    if($node.postPackage){
+        Push-Location
+        Set-Location $node.spec.DirectoryName
+        try{
+            & $node.postPackage $node.spec.DirectoryName $version
+        } finally {
+            Pop-Location
+        }
+    }
 }
