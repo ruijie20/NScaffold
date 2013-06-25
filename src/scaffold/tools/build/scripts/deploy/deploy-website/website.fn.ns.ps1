@@ -25,9 +25,13 @@ Function Skip-HTTSCertValidation{
         System.Net.ServicePointManager.ServerCertificateValidationCallback = delegate { return true;} ;
     }
 '@
-    Add-Type -Namespace PSUtils -Name CSRunner -MemberDefinition $SetSuccessValidatorSrc
+    if(-not ("PSUtils.CSRunner" -as [type])) {
+        Add-Type -Namespace PSUtils -Name CSRunner -MemberDefinition $SetSuccessValidatorSrc
+    }
+
     [PSUtils.CSRunner]::SetSuccessValidator()
 }
+
 Function Redo-OnException($RetryCount = 3, $SleepSecond = 0, $RedoActionScriptBlock){
     for ($i=0; $true; $i++){
         try{
