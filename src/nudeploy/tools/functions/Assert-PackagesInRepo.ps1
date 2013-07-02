@@ -9,7 +9,6 @@ Function Test-PackageExisted($package, $version, $nugetRepo){
 }
 
 Function Assert-PackagesInRepo($envConfig){
-    Log-Progress "Start Assert-PackagesInRepo"
     $nugetRepo = $envConfig.nugetRepo
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     $envConfig.apps | %{
@@ -24,5 +23,4 @@ Function Assert-PackagesInRepo($envConfig){
             throw "Package[$package] with version[$version] not found in repository[$nugetRepo]"
         }
     }
-    Log-Progress "End Assert-PackagesInRepo"
 }
