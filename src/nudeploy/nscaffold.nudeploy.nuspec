@@ -25,6 +25,7 @@
     <file src="..\..\src-libs\functions\Install-NuPackage.ns.ps1" target="tools\libs\Install-NuPackage.ps1" />
     <file src="..\..\src-libs\functions\Import-Config.ns.ps1" target="tools\libs\Import-Config.ps1" />
     <file src="..\..\src-libs\functions\Merge-HashTable.ns.ps1" target="tools\libs\Merge-HashTable.ps1" />
+    <file src="..\..\src-libs\functions\Log-Progress.ps1" target="tools\libs\Log-Progress.ps1" />
     <file src="..\..\tools\nuget\**" target="tools\tools\nuget\" />
   </files>
 </package>

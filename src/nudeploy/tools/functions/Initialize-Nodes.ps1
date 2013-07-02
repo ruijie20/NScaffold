@@ -3,7 +3,6 @@ Function Initialize-Nodes($envConfig){
     $targetNodes = $envConfig.apps | % { $_.server } | Sort | Get-Unique
     Add-HostAsTrusted $targetNodes
     $targetNodes | % { Setup-NuDeployRemotely $_ $envConfig.nodeDeployRoot} | Out-Default
-    
 }
 Function Add-HostAsTrusted($targetNodes) {
     Write-Host "Adding nodes to TrustedHosts"
@@ -11,7 +10,7 @@ Function Add-HostAsTrusted($targetNodes) {
 }
 
 Function Setup-NuDeployRemotely($server, $nodeDeployRoot){
-    Write-Host "Preparing NuDeploy on node [$server]...." -f cyan
+    Log-Progress "Preparing NuDeploy on node [$server]...."
     Clear-RemoteDeployRoot $server $nodeDeployRoot
 
     $nugetExeDest = "$nodeDeployRoot\tools\nuget.exe"
@@ -22,7 +21,7 @@ Function Setup-NuDeployRemotely($server, $nodeDeployRoot){
 
     $installPath = "$nodeDeployRoot\tools"
     Install-NuDeployOnRemote $server $nugetExeDest $nugetRepoDest $installPath
-    Write-Host "Node [$server] has been setup NuDeploy.`n" -f cyan
+    Log-Progress "Node [$server] has been setup NuDeploy.`n"
 }
 Function Clear-RemoteDeployRoot($server, $path) {
     Run-RemoteScript $server {

@@ -32,12 +32,14 @@ Function Install-NuDeployPackage(){
     $nugetSource = $source
     $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
 
+    Log-Progress "Start Install-NuPackage $packageId"
     $packageDir = Install-NuPackage $packageId $workingDir $version
 
     if ($config -and (Test-Path "$packageDir\config.ini")){
         Verify-Config $config "$packageDir\config.ini"
     }
     if (-not $ignoreInstall -and (Test-Path "$packageDir\install.ps1")) {
+        Log-Progress "Start install.ps1 $packageId"
         $result = Use-Directory $packageDir {
             if ($features -eq $null) {
                 & ".\install.ps1" $config
@@ -48,6 +50,7 @@ Function Install-NuDeployPackage(){
                 throw "install.ps1 end with exit code: $Lastexitcode"
             }
         }
+        Log-Progress "End install.ps1 $packageId"
     }
     if($PsCmdlet.ParameterSetName -eq 'configObject') {
         Remove-Item $config -Force -ea SilentlyContinue

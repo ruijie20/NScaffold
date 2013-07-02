@@ -5,6 +5,7 @@ Function Install-NuDeployEnv{
        [string] $nugetRepoSource,
        [switch] $DryRun
     )
+    Log-Progress "Start Install-NuDeployEnv"
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
     Initialize-Nodes $envConfig | Out-Default
     $envConfig.apps | % { Deploy-App $_ $envConfig $dryRun}
@@ -88,12 +89,14 @@ Function Deploy-App ($appConfig, $envConfig, $dryRun) {
     $features = $appConfig.features
     $forceRedeploy = $features -contains "forceRedeploy"
 
+    Log-Progress "Start Deploy-App $($appConfig.package)"
     $appConfig.exports = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy -dryRun:$dryRun {
         $nugetRepo = $envConfig.nugetRepo
         $nodeDeployRoot = $envConfig.nodeDeployRoot 
 
         $packageConfig = Import-Config $appConfig.config
 
+        Log-Progress "Start Run-RemoteScript for $($appConfig.package) in $($appConfig.server)"
         Run-RemoteScript $appConfig.server {
             param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
             $destAppPath = "$nodeDeployRoot\$package" 
@@ -106,5 +109,6 @@ Function Deploy-App ($appConfig, $envConfig, $dryRun) {
         } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, `
             $packageConfig, $features, $dryRun
     }
+    Log-Progress "end Deploy-App $($appConfig.package)"
     $appConfig
 }
