@@ -21,5 +21,8 @@ Function Reset-AppPool($appPoolName, $username, $password, $loadUserProfile){
         }
     }
     Set-ItemProperty $appPoolPath managedRuntimeVersion v4.0
+    Set-ItemProperty $appPoolPath -Name recycling.periodicrestart.time -Value 0
+    $thirtyDays = [TimeSpan]::FromMinutes(43200)
+    Set-ItemProperty $appPoolPath -Name processModel.idleTimeout -Value $thirtyDays
     Write-Host "Application pool [$appPoolName] is ready."
 }
