@@ -1,6 +1,6 @@
 
 Function Install-NuPackage($package, $workingDir, [string]$version = "", [scriptblock] $postInstall) {
-    Write-Host "Downloading package [$package] from [$nugetSource] to [$workingDir]...." -f cyan
+    Write-Host "$(date): Downloading package [$package] from [$nugetSource] to [$workingDir]...." -f cyan
     
     if ($version) {
         $versionSection = "-version $version"
@@ -15,7 +15,14 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
         throw "`$nuget need to be set. "
     }
 
-    $cmd = "$nuget install $package $versionSection $sourceSection -nocache -OutputDirectory $workingDir 2>&1"
+    $packageInstalled = @(& $nuget list $package -allversions -source $workingDir)
+
+    if($packageInstalled -contains "$package $version"){ 
+        write-host "Already installed [$package $version]" -f cyan
+        return "$workingDir\$package.$version"
+    }
+
+    $cmd = "$nuget install $package $versionSection $sourceSection -OutputDirectory $workingDir 2>&1"
     Write-Host "Executing: $cmd"
     $nuGetInstallOutput = Iex "$cmd"
 
