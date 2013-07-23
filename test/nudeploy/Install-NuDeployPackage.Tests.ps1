@@ -29,7 +29,7 @@ Describe "Install-NuDeployPackage" {
         $packageRoot = "$workingDir\$packageName.$packageVersion"
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
         $config = Import-Config $deploymentConfigFile
-        $config.DatabaseName.should.be("MyTaxes-local")
+        $config.DatabaseName.should.be("MyPackage-local")
         "$packageRoot\features.txt".should.exist()
         (Get-Content "$packageRoot\features.txt").should.be("default")
     }
@@ -40,7 +40,7 @@ Describe "Install-NuDeployPackage" {
         $packageRoot = "$workingDir\$packageName.0.9"
         $deploymentConfigFile = "$packageRoot\deployment.config.ini"
         $config = Import-Config $deploymentConfigFile
-		$config.DatabaseName.should.be("[MyTaxesDatabaseName]-[ENV]")
+		$config.DatabaseName.should.be("[MyPackageDatabaseName]-[ENV]")
         (Get-Content "$packageRoot\features.txt").should.be("renew load-balancer")
     }
 

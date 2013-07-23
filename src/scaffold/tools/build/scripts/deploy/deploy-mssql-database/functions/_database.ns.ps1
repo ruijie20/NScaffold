@@ -76,10 +76,13 @@ Function New-DatabaseUser {
 }
 
 Function Add-JobToRebuildIndex {
-	param($server, $database)
+	param($server, $database, $jobName)
 
 	Invoke-SqlScript -Server $server -File "$scriptDir\job_to_rebuild_index.ns.sql" `
-		-Variables @{ targetDBName = $database }
+		-Variables @{ 
+			targetDBName = $database 
+			jobName = $jobName
+		}
 }
 
 Function Invoke-SqlCommand {

@@ -9,15 +9,15 @@ Describe "Install-NudeployEnv with DryRun" {
         $deploymentConfigFile.should.exist()
         $config = Import-Config $deploymentConfigFile
         $config.Count.should.be(9)
-        $config.DatabaseName.should.be("MyTaxes-int")
-        $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
+        $config.DatabaseName.should.be("MyPackage-int")
+        $config.AppPoolPassword.should.be("password")
         $config.DataSource.should.be("localhost")
-        $config.WebsiteName.should.be("ConsentService-int")
+        $config.WebsiteName.should.be("MyService-int")
         $config.WebsitePort.should.be("8888")
-        $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
-        $config.AppPoolName.should.be("ConsentService-int")
-        $config.AppPoolUser.should.be("ConsentService-int")
-        $config.AppName.should.be("ConsentService")
+        $config.PhysicalPath.should.be('C:\IIS\MyService-int')
+        $config.AppPoolName.should.be("MyService-int")
+        $config.AppPoolUser.should.be("MyService-int")
+        $config.AppName.should.be("MyService")
     }
 
     Function Assert-InstallIsNotExecuted($envConfigFile, $package, $version){

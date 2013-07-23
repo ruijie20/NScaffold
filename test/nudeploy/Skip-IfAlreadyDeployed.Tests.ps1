@@ -14,7 +14,7 @@ Function New-TempFile($config){
 $appConfig = @{
     env = 'QA'
     server  = "10.18.8.25" 
-    package = "TigerUI"
+    package = "MyPackageUI"
     version = "1.1.1" 
     config  = New-TempFile @{k1 = 'v1'; k2 = 2}
 }
@@ -74,7 +74,7 @@ Describe "Skip-IfAlreadyDeployed" {
     }
 
     It "should deploy given this deployment doesn NOT have the same app as last one" {
-        Assert-DeployWhenEnvIsDifferent 'package' 'TigerAPI'
+        Assert-DeployWhenEnvIsDifferent 'package' 'MyPackageAPI'
     }
 
     It "should deploy given this deployment doesn NOT have the same version as last one" {

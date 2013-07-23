@@ -10,15 +10,15 @@ Describe "Install-NudeployEnv" {
         $deploymentConfigFile.should.exist()
         $config = Import-Config $deploymentConfigFile
         $config.Count.should.be(9)
-        $config.DatabaseName.should.be("MyTaxes-int")
-        $config.AppPoolPassword.should.be("TWr0ys1ngh4m")
+        $config.DatabaseName.should.be("MyPackage-int")
+        $config.AppPoolPassword.should.be("password")
         $config.DataSource.should.be("localhost")
-        $config.WebsiteName.should.be("ConsentService-int")
+        $config.WebsiteName.should.be("MyService-int")
         $config.WebsitePort.should.be("8888")
-        $config.PhysicalPath.should.be('C:\IIS\ConsentService-int')
-        $config.AppPoolName.should.be("ConsentService-int")
-        $config.AppPoolUser.should.be("ConsentService-int")
-        $config.AppName.should.be("ConsentService")
+        $config.PhysicalPath.should.be('C:\IIS\MyService-int')
+        $config.AppPoolName.should.be("MyService-int")
+        $config.AppPoolUser.should.be("MyService-int")
+        $config.AppName.should.be("MyService")
     }
 
     It "should deploy the package on the host specified in env config with correct package configurations with no spec param" {
@@ -111,13 +111,13 @@ Describe "Install-NudeployEnv with spec param" {
             param($packageRoot)
             $config = Import-Config "$packageRoot\deployment.config.ini"
             $config.DataSource.should.be("localhost1")
-            $config.DatabaseName.should.be("MyTaxes-local1")
-            $config.WebsiteName.should.be("ConsentService-local1")
+            $config.DatabaseName.should.be("MyPackage-local1")
+            $config.WebsiteName.should.be("MyService-local1")
             $config.WebsitePort.should.be("80791")
-            $config.AppPoolName.should.be("ConsentService-local1")
-            $config.AppPoolUser.should.be("ConsentService-local1")
-            $config.AppPoolPassword.should.be("TWr0ys1ngh4m1")
-            $config.PhysicalPath.should.be("C:\IIS\ConsentService-local1")
+            $config.AppPoolName.should.be("MyService-local1")
+            $config.AppPoolUser.should.be("MyService-local1")
+            $config.AppPoolPassword.should.be("password1")
+            $config.PhysicalPath.should.be("C:\IIS\MyService-local1")
         }
     }
 }

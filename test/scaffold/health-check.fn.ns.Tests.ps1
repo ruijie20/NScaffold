@@ -78,7 +78,7 @@ Describe "Test-WebsiteMatch" {
                 healthCheckPath = "/health.aspx?check=all"
             }
             $packageInfo = @{
-                packageId = "TigerApi"
+                packageId = "MyPackageApi"
                 version = "1.0.123.0"
             }
             $match = Test-WebsiteMatch $config $packageInfo
@@ -97,7 +97,7 @@ Describe "Test-WebsiteMatch" {
                 healthCheckPath = "/health.aspx?check=all"
             }
             $packageInfo = @{
-                packageId = "TigerApi"
+                packageId = "MyPackageApi"
                 version = "1.0.123.1"
             }
             

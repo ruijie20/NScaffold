@@ -5,11 +5,11 @@ $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 	nodeDeployRoot = "$TestDrive\deployment_root"
 	variables = @{
 		ENV = "int"
-		PWD ="TWr0ys1ngh4m"
+		PWD ="password"
 		IISRoot = "C:\IIS"
 		DBHost = 'localhost'
-		MyTaxesDatabaseName = "MyTaxes"
-		ConsentServicePort = 8888
+		MyPackageDatabaseName = "MyPackage"
+		MyServicePort = 8888
 	}
 	apps = @(
 	 	@{
