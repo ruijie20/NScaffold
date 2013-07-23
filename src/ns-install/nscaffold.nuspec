@@ -11,7 +11,7 @@
     <projectUrl>https://github.com/xiaoyvr/NScaffold</projectUrl>
     <tags>NScaffold</tags>
     <copyright></copyright>
-    <licenseUrl>https://foo/license.txt</licenseUrl>
+    <licenseUrl>https://raw.github.com/xiaoyvr/NScaffold/master/LICENSE-MIT.txt</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <!--<iconUrl>https://github.com/__CHOCO_PKG_OWNER_REPO__/raw/master/__NAME__/__NAME__.gif</iconUrl>-->
     <!--<dependencies>

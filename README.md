@@ -84,3 +84,7 @@ NuDeploy
 
 PowerShell module help to deploy nuget packages. 
 Use psget or manully install them as PSModule
+
+License
+============
+This software is free to use under the [MIT license](https://raw.github.com/xiaoyvr/NScaffold/master/LICENSE-MIT.txt). 
