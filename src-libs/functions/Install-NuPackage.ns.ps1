@@ -15,7 +15,7 @@ Function Install-NuPackage($package, $workingDir, [string]$version = "", [script
         throw "`$nuget need to be set. "
     }
 
-    $packageInstalled = @(Iex "$nuget list $package -allversions -source $workingDir")
+    $packageInstalled = @(& $nuget list $package -allversions -source $workingDir)
 
     if($packageInstalled -contains "$package $version"){ 
         write-host "Already installed [$package $version]" -f cyan
