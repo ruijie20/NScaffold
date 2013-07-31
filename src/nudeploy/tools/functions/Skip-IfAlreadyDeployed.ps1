@@ -29,12 +29,12 @@ Function Skip-IfAlreadyDeployed ($root, $appConfig, [switch]$force, $scriptBlock
     $lastDeploymentConfig = "$root\$historyFilePrefix.ini"
     $lastDeploymentResult = "$root\$historyFilePrefix" + "_deployResult.xml"
 
-    if((-not $force) -and (Test-AlreadyDeployed $appConfig)){
+    if((-not $force) -and (Test-AlreadyDeployed $appConfig)){###    $force
         Write-Host "$(Convert-AppConfigToString $appConfig) has ALREADY been deployed. Skip deployment." -f cyan
         Import-Clixml $lastDeploymentResult
     }else{       
-        $deployResult = (& $scriptBlockToDeploy)
-        if(-not($dryRun)){
+        $deployResult = (& $scriptBlockToDeploy) ###
+        if(-not($dryRun)){  ###
             Register-SuccessDeployment $deployResult
         }
         Write-Host "Succesfully deployed $(Convert-AppConfigToString $appConfig)." -f cyan

@@ -8,7 +8,7 @@ Function Install-NuDeployEnv{
     Log-Progress "Start Install-NuDeployEnv"
     $envConfig = Get-DesiredEnvConfig $envPath $nugetRepoSource $versionSpec
     Initialize-Nodes $envConfig | Out-Default
-    $envConfig.apps | % { Deploy-App $_ $envConfig $dryRun}
+    Deploy-Env $envConfig $dryRun
 }
 
 Function Get-EnvConfigFilePath($envPath){
@@ -85,31 +85,37 @@ Function Assert-AppConfigs($envConfig) {
     Log-Progress "End Assert-PackagesInRepo"
 }
 
-Function Deploy-App ($appConfig, $envConfig, $dryRun) {
-    $appConfig.env = $envConfig.variables.ENV
-    $features = $appConfig.features
-    $forceRedeploy = $features -contains "forceRedeploy"
-
-    Log-Progress "Start Deploy-App $($appConfig.package)"
-    $appConfig.exports = Skip-IfAlreadyDeployed $envConfig.deploymentHistoryFolder $appConfig -force:$forceRedeploy -dryRun:$dryRun {
-        $nugetRepo = $envConfig.nugetRepo
-        $nodeDeployRoot = $envConfig.nodeDeployRoot 
-
-        $packageConfig = Import-Config $appConfig.config
-
-        Log-Progress "Start Run-RemoteScript for $($appConfig.package) in $($appConfig.server)"
-        Run-RemoteScript $appConfig.server {
-            param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
-            $destAppPath = "$nodeDeployRoot\$package" 
-
-            $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
-
-            Import-Module $nudeployModule.FullName -Force
-            Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo `
-                -workingDir $destAppPath -co $packageConfig -features $features -ignoreInstall:$dryRun
-        } -ArgumentList $nodeDeployRoot, $appConfig.version, $appConfig.package, $nugetRepo, `
-            $packageConfig, $features, $dryRun
+Function Deploy-Env($envConfig, $dryRun) {
+    $envConfig.apps | % { $_.env = $envConfig.variables.ENV }
+    $envConfig.apps | % { 
+        $forceRedeploy = $_.features -contains "forceRedeploy"
+        if(-not $forceRedeploy){
+            $_.exports = Load-LastMatchingDeploymentResult $envConfig.deploymentHistoryFolder $_
+        }
     }
-    Log-Progress "end Deploy-App $($appConfig.package)"
+    $envConfig.apps | ? { -not $_.exports} | % { Deploy-App $_ $envConfig $dryRun} | %{ 
+        if(-not $dryRun){
+            Save-LastDeploymentResult $envConfig.deploymentHistoryFolder $_ $_.exports 
+        }
+        $_
+    }
+}
+Function Deploy-App ($appConfig, $envConfig, $dryRun) {
+    Log-Progress "Start Deploy-App $($appConfig.package) in $($appConfig.server)"
+    $packageConfig = Import-Config $appConfig.config
+
+    $appConfig.exports = Run-RemoteScript $appConfig.server {
+        param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
+        $destAppPath = "$nodeDeployRoot\$package" 
+
+        $nudeployModule = Get-ChildItem "$nodeDeployRoot\tools" "nudeploy.psm1" -Recurse
+
+        Import-Module $nudeployModule.FullName -Force
+        Install-NuDeployPackage -packageId $package -version $version -source $nugetRepo `
+            -workingDir $destAppPath -co $packageConfig -features $features -ignoreInstall:$dryRun
+    } -ArgumentList $envConfig.nodeDeployRoot, $appConfig.version, $appConfig.package, $envConfig.nugetRepo, `
+        $packageConfig, $appConfig.features, $dryRun
+
+    Log-Progress "end Deploy-App $($appConfig.package) $($appConfig.exports)"
     $appConfig
 }
