@@ -80,9 +80,6 @@ Function Assert-AppConfigs($envConfig) {
     if(-not $envConfig.variables.ENV){
         Write-Host 'Warning: Environment variables are not set in $envConfig.variables.ENV' -f yellow
     }
-    Log-Progress "Start Assert-PackagesInRepo"
-    Assert-PackagesInRepo $envConfig
-    Log-Progress "End Assert-PackagesInRepo"
 }
 
 Function Deploy-Env($envConfig, $dryRun) {
@@ -93,18 +90,28 @@ Function Deploy-Env($envConfig, $dryRun) {
             $_.exports = Load-LastMatchingDeploymentResult $envConfig.deploymentHistoryFolder $_
         }
     }
-    $envConfig.apps | ? { -not $_.exports} | % { Deploy-App $_ $envConfig $dryRun} | %{ 
-        if(-not $dryRun){
-            Save-LastDeploymentResult $envConfig.deploymentHistoryFolder $_ $_.exports 
+    $tobeDeployApps = $envConfig.apps | ? { -not $_.exports}
+    if($tobeDeployApps){
+        Log-Progress "Start Assert-PackagesInRepo"
+        Assert-PackagesInRepo $envConfig.nugetRepo $tobeDeployApps
+        Log-Progress "End Assert-PackagesInRepo"
+
+        $tobeDeployApps | % { 
+            $_.exports = Deploy-App $_ $envConfig $dryRun
+            $_
+        } | %{ 
+            if(-not $dryRun){
+                Save-LastDeploymentResult $envConfig.deploymentHistoryFolder $_ $_.exports 
+            }
         }
-        $_
     }
+    $envConfig.apps
 }
 Function Deploy-App ($appConfig, $envConfig, $dryRun) {
     Log-Progress "Start Deploy-App $($appConfig.package) in $($appConfig.server)"
     $packageConfig = Import-Config $appConfig.config
 
-    $appConfig.exports = Run-RemoteScript $appConfig.server {
+    Run-RemoteScript $appConfig.server {
         param($nodeDeployRoot, $version, $package, $nugetRepo, $packageConfig, $features, $dryRun)
         $destAppPath = "$nodeDeployRoot\$package" 
 
@@ -116,6 +123,5 @@ Function Deploy-App ($appConfig, $envConfig, $dryRun) {
     } -ArgumentList $envConfig.nodeDeployRoot, $appConfig.version, $appConfig.package, $envConfig.nugetRepo, `
         $packageConfig, $appConfig.features, $dryRun
 
-    Log-Progress "end Deploy-App $($appConfig.package) $($appConfig.exports)"
-    $appConfig
+    Log-Progress "end Deploy-App $($appConfig.package)"
 }

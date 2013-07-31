@@ -32,14 +32,10 @@ Describe "Assert-PackagesInRepo" {
     Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.1"
     Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.2"
 
-    $envConfig = @{
-        nugetRepo = $nugetRepo
-        apps = @()
-    }
     $PSScriptRoot = $root
 
     It "should return quietly when given package is in the repository" {
-        $envConfig.apps = @(
+        $apps = @(
                 @{
                     "package" = "NScaffold.NuDeploy"
                     "version" = "0.0.1"
@@ -54,11 +50,11 @@ Describe "Assert-PackagesInRepo" {
                 }
             )
 
-        Assert-PackagesInRepo $envConfig
+        Assert-PackagesInRepo $nugetRepo $apps
     }
 
     It "should throw exception when 1 of the given package is not in the repository" {
-        $envConfig.apps = @(
+        $apps = @(
                 @{
                     "package" = "NScaffold.NuDeploy"
                     "version" = "0.0.1"
@@ -69,21 +65,21 @@ Describe "Assert-PackagesInRepo" {
                 }
             )
         try{
-            Assert-PackagesInRepo $envConfig
+            Assert-PackagesInRepo $nugetRepo $apps
             throw "Exception is not thrown"
         }catch{
             $_.should.match("not found")
         }
     }
     It "should throw exception when version doesn't match exactly" {
-        $envConfig.apps = @(
+        $apps = @(
                 @{
                     "package" = "NScaffold.NuDeploy"
                     "version" = "0.0"
                 }
             )
         try{
-            Assert-PackagesInRepo $envConfig
+            Assert-PackagesInRepo $nugetRepo $apps
             throw "Exception is not thrown"
         }catch{
             $_.should.match("not found")
