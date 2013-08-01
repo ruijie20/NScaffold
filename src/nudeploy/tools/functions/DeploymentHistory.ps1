@@ -44,7 +44,6 @@ Function Save-LastDeploymentResult($historyRoot, $appConfig, $deployResult){
     }
 }
 Function Load-LastMatchingDeploymentResult($historyRoot, $appConfig){
-    Write-Host "Loading DeploymentHistory for $(Convert-AppConfigToString $appConfig)" -f cyan
     $lastDeploymentConfig = Get-DeploymentHistoryConfigFilePath $appConfig
     $lastDeploymentResult = Get-DeploymentHistoryResultFilePath $appConfig
 

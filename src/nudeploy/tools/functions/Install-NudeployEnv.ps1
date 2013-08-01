@@ -90,6 +90,10 @@ Function Deploy-Env($envConfig, $dryRun) {
             $_.exports = Load-LastMatchingDeploymentResult $envConfig.deploymentHistoryFolder $_
         }
     }
+    $envConfig.apps | ? { $_.exports } | %{
+        Write-Host "package [$($_.package)] version [$($_.version)] on node [$($_.server)] with config [$($_.config)] of environment[$($_.env)] has ALREADY been deployed. Skip deployment" -f cyan
+    }
+
     $tobeDeployApps = $envConfig.apps | ? { -not $_.exports}
     if($tobeDeployApps){
         Log-Progress "Start Assert-PackagesInRepo"
