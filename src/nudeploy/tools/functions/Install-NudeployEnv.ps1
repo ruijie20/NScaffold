@@ -84,29 +84,21 @@ Function Assert-AppConfigs($envConfig) {
 
 Function Deploy-Env($envConfig, $dryRun) {
     $envConfig.apps | % { $_.env = $envConfig.variables.ENV }
-    $envConfig.apps | % { 
-        $forceRedeploy = $_.features -contains "forceRedeploy"
-        if(-not $forceRedeploy){
-            $_.exports = Load-LastMatchingDeploymentResult $envConfig.deploymentHistoryFolder $_
-        }
-    }
-    $envConfig.apps | ? { $_.exports } | %{
+    $envConfig.apps | % { $_.exports = Load-LastMatchingDeploymentResult $envConfig.deploymentHistoryFolder $_ }
+   
+    $tobeDeployApps = $envConfig.apps | ? { ($_.features -contains "forceRedeploy") -or (-not $_.exports) }
+    $envConfig.apps | ? { -not ($tobeDeployApps -contains $_) } | %{
         Write-Host "package [$($_.package)] version [$($_.version)] on node [$($_.server)] with config [$($_.config)] of environment[$($_.env)] has ALREADY been deployed. Skip deployment" -f cyan
     }
 
-    $tobeDeployApps = $envConfig.apps | ? { -not $_.exports}
     if($tobeDeployApps){
         Log-Progress "Start Assert-PackagesInRepo"
         Assert-PackagesInRepo $envConfig.nugetRepo $tobeDeployApps
         Log-Progress "End Assert-PackagesInRepo"
 
-        $tobeDeployApps | % { 
-            $_.exports = Deploy-App $_ $envConfig $dryRun
-            $_
-        } | %{ 
-            if(-not $dryRun){
-                Save-LastDeploymentResult $envConfig.deploymentHistoryFolder $_ $_.exports 
-            }
+        $tobeDeployApps | % { $_.exports = Deploy-App $_ $envConfig $dryRun} 
+        if(-not $dryRun){
+            $tobeDeployApps | %{ Save-LastDeploymentResult $envConfig.deploymentHistoryFolder $_ $_.exports }
         }
     }
     $envConfig.apps
