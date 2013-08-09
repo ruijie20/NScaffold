@@ -54,7 +54,7 @@ $codebaseConfig = & "$codeBaseRoot\codebaseConfig.ps1"
 # extra ps-gets
 if($codebaseConfig.extraPSGets) {
     $codebaseConfig.extraPSGets | % {
-        PS-Get $_.packageId $_.version
+        PS-Get $_.packageId $_.version $_.source
     }    
 }
 
