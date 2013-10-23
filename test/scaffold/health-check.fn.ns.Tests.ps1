@@ -66,13 +66,25 @@ DB=Success
     }
 }
 
+function Get-UNCPath($path){    
+    $drive = Split-Path -qualifier $path
+    $logicalDisk = Gwmi Win32_LogicalDisk -filter "DriveType = 4 AND DeviceID = '$drive'"
+    if($logicalDisk){
+        $path.Replace($drive, $logicalDisk.ProviderName)
+    }
+    else {
+        $path
+    }
+}
+
 Describe "Test-WebsiteMatch" {
     $testSiteName = "TestWebsiteMatchSite"
     $port = 1005
     It "should return true when website matches with the artifact version" {
         try{
             Remove-Website -Name $testSiteName -ErrorAction SilentlyContinue
-            New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath "$fixturesTemplate\healthchecksite" -Force
+            $physicalPath = Get-UNCPath("$fixturesTemplate\healthchecksite")
+            New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath $physicalPath -Force            
             $config = @{
                 siteName= $testSiteName
                 healthCheckPath = "/health.aspx?check=all"
@@ -91,7 +103,8 @@ Describe "Test-WebsiteMatch" {
     It "should return false when website does NOT match with the artifact version" {
         try{
             Remove-Website -Name $testSiteName -ErrorAction SilentlyContinue
-            New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath "$fixturesTemplate\healthchecksite" -Force
+            $physicalPath = Get-UNCPath("$fixturesTemplate\healthchecksite")
+            New-Website $testSiteName -Port $port -IPAddress "*" -physicalPath $physicalPath -Force
             $config = @{
                 siteName= $testSiteName
                 healthCheckPath = "/health.aspx?check=all"

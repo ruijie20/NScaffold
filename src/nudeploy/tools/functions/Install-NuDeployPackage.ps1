@@ -30,7 +30,7 @@ Function Install-NuDeployPackage(){
         $config = (Resolve-Path $config).ProviderPath    
     }
     $nugetSource = $source
-    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+#    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
 
     Log-Progress "Start Install-NuPackage $packageId"
     $packageDir = Install-NuPackage $packageId $workingDir $version

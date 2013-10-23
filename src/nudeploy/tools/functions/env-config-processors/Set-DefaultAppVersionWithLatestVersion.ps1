@@ -9,7 +9,7 @@ Function Set-DefaultAppVersionWithLatestVersion($envConfig) {
     $latestVersions | Out-Host
 }
 Function Resolve-LatestPackageVersion($package, $nugetRepo){
-    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+#    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     Write-Host "$nuget list $package -source $nugetRepo"
     if( (& $nuget list $package -source $nugetRepo | ? { 
         $_ -match "^$package (?<version>(?:\d+\.)*\d+(?:-(?:\w|-)*)?)" })){

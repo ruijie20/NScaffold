@@ -32,7 +32,7 @@ Describe "Assert-PackagesInRepo" {
     Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.1"
     Publish-NugetPackage "$root\src\nudeploy\nscaffold.nudeploy.nuspec" "0.0.2"
 
-    $PSScriptRoot = $root
+    $nuget = "$root\tools\nuget\nuget.exe"
 
     It "should return quietly when given package is in the repository" {
         $apps = @(
@@ -49,7 +49,6 @@ Describe "Assert-PackagesInRepo" {
                     "version" = "0.0.1"
                 }
             )
-
         Assert-PackagesInRepo $nugetRepo $apps
     }
 

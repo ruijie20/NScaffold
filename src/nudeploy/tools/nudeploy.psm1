@@ -8,6 +8,9 @@ Get-ChildItem "$PSScriptRoot\functions" -Filter *.ps1 -Recurse |
         . $_.FullName
     }
 
+$nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+$PSModuleRoot = $PSScriptRoot
+
 Set-Alias nudeploy Install-NuDeployPackage
 Set-Alias nudeployEnv Install-NuDeployEnv
 Export-ModuleMember -Function Install-NuDeployPackage -Alias nudeploy

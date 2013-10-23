@@ -9,7 +9,7 @@ Function Test-PackageExisted($package, $version, $nugetRepo){
 }
 
 Function Assert-PackagesInRepo($nugetRepo, $apps){
-    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
+#    $nuget = "$PSScriptRoot\tools\nuget\nuget.exe"
     $apps | %{
         $package = $_.package
         $version = $_.version

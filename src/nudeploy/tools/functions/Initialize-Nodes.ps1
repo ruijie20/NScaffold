@@ -32,11 +32,10 @@ Function Clear-RemoteDeployRoot($server, $path) {
     } -argumentList $path | out-Default
 }
 Function Copy-NuGetExeToRemote($server, $nugetExeDest) {
-    $nugetExeSource = "$PSScriptRoot\tools\nuget\nuget.exe"
-    Copy-FileRemote $server $nugetExeSource $nugetExeDest | out-Default
+    Copy-FileRemote $server $nuget $nugetExeDest | out-Default
 }
 Function Copy-NuDeployPkgToRemote($server, $nugetRepoDest) {
-    $nudeployNugetPkgPath = Resolve-Path "$PSScriptRoot\..\*.nupkg"
+    $nudeployNugetPkgPath = Resolve-Path "$PSModuleRoot\..\*.nupkg"
     $nupkg = Get-Item $nudeployNugetPkgPath
     Copy-FileRemote $server $nupkg.FullName "$nugetRepoDest\$($nupkg.Name)" | out-Default
 }
