@@ -53,6 +53,7 @@ Function New-LocalUser
  $user.setpassword($password) 
  $user.put("description",$description)
  $user.put("PasswordExpired", 0) 
+ $user.UserFlags.value = $user.UserFlags.value -bor 0x10000
  $user.SetInfo() 
 } #end function New-LocalUser 
  
