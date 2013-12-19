@@ -31,12 +31,12 @@ Function Test-SuspendedFromLoadBalancer($websiteName){
     }
 }
 Function Assert-SuspendedFromLoadBalancer($websiteName) {
-    if(-not (Test-SuspendedFromLoadBalancer $websiteName)) {
-        throw "Website [$websiteName] is not suspended from load balancer!"
+    Redo-UntilCondition -condition $true -errorMessage "Website [$websiteName] is not suspended from load balancer!" -action {
+        return Test-SuspendedFromLoadBalancer $websiteName
     }
 }
 Function Assert-AddedToLoadBalancer($websiteName){
-    if(Test-SuspendedFromLoadBalancer $websiteName) {
-        throw "Website [$websiteName] is suspended from load balancer!"
+    Redo-UntilCondition -condition $false -errorMessage "Website [$websiteName] is suspended from load balancer!" -action {
+        return Test-SuspendedFromLoadBalancer $websiteName
     }
 }

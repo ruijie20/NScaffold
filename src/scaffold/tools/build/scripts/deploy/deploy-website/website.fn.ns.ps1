@@ -47,6 +47,21 @@ Function Redo-OnException($RetryCount = 3, $SleepSecond = 0, $RedoActionScriptBl
     }
 }
 
+Function Redo-UntilCondition($timeout = 30, $condition, $errorMessage, $action) {
+    $retry = 0
+    $succeed = $false
+    while(!$succeed -and ($retry -le $timeout)) {
+        $succeed = (& $action) -eq $condition
+        if(!$succeed) {
+            $retry = $retry + 1
+            sleep 1   
+        }
+    }
+    if(-not $succeed) {
+        throw $errorMessage
+    }
+}
+
 Function New-Mark($ignore = 7) {
     $stack = Get-PSCallStack
     $num = $stack.Count - $ignore
